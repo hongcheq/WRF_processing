@@ -10,6 +10,19 @@ import cartopy
 import pandas as pd
 import datetime
 
+### workaround for the "urlopen error [SSL: CERTIFICATE_VERIFY_FAILED]" error message
+import ssl
+try:
+    _create_unverified_https_context = ssl._create_unverified_context
+except AttributeError:
+    # Legacy Python that doesn't verify HTTPS certificates by default
+    pass
+else:
+    # Handle target environment that doesn't support HTTPS verification
+    ssl._create_default_https_context = _create_unverified_https_context
+### 
+
+
 VAR_WRF_str = "T2_regrid"
 VAR_obs_str = "t2m"
 
@@ -87,12 +100,12 @@ fig = plt.figure()
 
 ax = fig.add_subplot(3, 4, 1, projection=map_crs)
 ax.set_extent([233,292,18,57], crs=map_crs)
-#ax.coastlines()
+ax.coastlines()
 ax.set_title('WRF, May')
 ax.contourf(VAR_WRF_May['lon'], VAR_WRF_May['lat'], VAR_WRF_May, transform=data_crs) 
 
-#plt.show()
-fig.savefig('test.png', dpi=600, bbox_inches='tight')
+plt.show()
+#fig.savefig('test.png', dpi=600, bbox_inches='tight')
 
 
 
