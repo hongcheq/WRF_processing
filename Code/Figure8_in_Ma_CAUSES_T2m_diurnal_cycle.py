@@ -48,9 +48,6 @@ temp_JJA = temp_0678.groupby('time.hour').mean()
 ARM_May = temp_May.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
 ARM_JJA = temp_JJA.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
 
-#print(ARM_May)
-#print(ARM_JJA)
-
 ### WRF bias in May, and JJA ###
 bias_May = WRF_May - ARM_May
 bias_JJA = WRF_JJA - ARM_JJA
