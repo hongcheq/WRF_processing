@@ -73,6 +73,12 @@ EF_WRF_SGP = EF_WRF_daily.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).
 EF_WRF_SGP.attrs['units'] = "unitless"
 #print(EF_WRF_SGP)
 
+### T2m
+T2_regrid = ds_WRF['T2_regrid']
+T2_WRF_daily = T2_regrid.resample(time='1D').mean(dim='time')
+T2_WRF_SGP = T2_WRF_daily.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
+#print(T2_WRF_SGP)
+
 ### ---------------------------
 ### ARM SGP obs: ARMBE2DGRID from Qi Tang
 
@@ -137,6 +143,15 @@ EF_daily = EF_obs.resample(time='1D').mean('time')
 EF_ARM_SGP = EF_daily.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
 EF_ARM_SGP.attrs['units'] = "unitless"
 
+### 2m air temperature 
+temp05 = ds_ARMBE2D_05['temp'] 
+temp06 = ds_ARMBE2D_06['temp']
+temp07 = ds_ARMBE2D_07['temp']
+temp08 = ds_ARMBE2D_08['temp']
+temp_05678 = xr.concat([temp05, temp06, temp07, temp08], dim='time')
+temp_daily = temp_05678.resample(time='1D').mean('time')
+temp_ARM_SGP = temp_daily.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
+#print(temp_ARM_SGP)
 
 ### ---------------------------
 ### Plot ###
@@ -149,7 +164,7 @@ days = mdates.DayLocator()
 #dates_fmt = mdates.DateFormatter('%Y-%m-%d')
 dates_fmt = mdates.DateFormatter('%m-%d')
 
-fig = plt.figure(figsize=(8,10))
+fig = plt.figure(figsize=(9,10))
 fontsize = 8
 pos_adjust1 = 0.02
 
@@ -215,12 +230,27 @@ ax4.legend(loc='lower left',fontsize=fontsize)
 ax4.xaxis.set_major_locator(months)
 ax4.xaxis.set_major_formatter(dates_fmt)
 
+### suplot(3,2,6)
+#print(T2_WRF_SGP.values)
+#print(temp_ARM_SGP.values)
+#print(T2_WRF_SGP.values - temp_ARM_SGP[0:122].values)
+#exit()
+
+ax6 = fig.add_subplot(3,2,6)
+ax6.text(s='T2 bias, WRF-obs, K', x=0, y=1.02, ha='left', va='bottom', \
+        fontsize=fontsize, transform=ax6.transAxes)
+ax6.plot(x_axis, (T2_WRF_SGP.values - temp_ARM_SGP[0:122].values) , 'r-', label='T2m bias')
+ax6.grid()
+ax6.legend(loc='lower left',fontsize=fontsize)
+# format the ticks
+ax6.xaxis.set_major_locator(months)
+ax6.xaxis.set_major_formatter(dates_fmt)
 
 ###
 
 #fig.savefig("../Figure/Figure15.WRF_vs_ARM_SGP.png",dpi=600, bbox_inches='tight')
 fig.savefig("../Figure/Figure15.WRF_vs_ARM_SGP.png",dpi=600)
-plt.show()
+#plt.show()
 
 
 
