@@ -61,31 +61,43 @@ bias_JJA = WRF_JJA - ARM_JJA
 ### Plot ###
 x_axis = WRF_May.coords['hour']
 
-fig = plt.figure()
+fig = plt.figure(figsize=(9,10))
 fontsize = 7
 pos_adjust1 = 0.04
 
-ax1 = fig.add_subplot(2,1,1)
+ax1 = fig.add_subplot(3,1,1)
 ax1.text(s='Precip bias, WRF-ARMBE2D', x=0, y=1.02, ha='left', va='bottom', \
         fontsize=fontsize, transform=ax1.transAxes)
-ax1.plot(x_axis, bias_May.values, 'b-', label='precip,May')
-ax1.plot(x_axis, bias_JJA.values, 'b--', label='precip,JJA')
-#ax1.set_yticks(np.arange(0.0,4.6,0.5))
+ax1.plot(x_axis, bias_May.values, 'r-', label='precip,May')
+ax1.plot(x_axis, bias_JJA.values, 'r--', label='precip,JJA')
+ax1.set_yticks(np.arange(-2.0,9.1,1.0))
+ax1.axhline(linewidth=1.5, color='k')
 ax1.set_xticks(np.arange(0.0,24.1,3.0))
 ax1.set(xlabel='UTC(hr)', ylabel='WRF precip bias, mm/day', title='Precip, WRF vs ARM SGP')
 ax1.grid()
 ax1.legend(loc='upper right')
 
-ax2 = fig.add_subplot(2,1,2)
-ax2.text(s='precip,SGP,ARMBE2D', x=0, y=1.02, ha='left', va='bottom', \
+ax2 = fig.add_subplot(3,1,2)
+ax2.text(s='Precip, WRF', x=0, y=1.02, ha='left', va='bottom', \
         fontsize=fontsize, transform=ax2.transAxes)
-ax2.plot(x_axis, ARM_May.values, 'k-', label='precip,May')
-ax2.plot(x_axis, ARM_JJA.values, 'k--', label='precip,JJA')
-#ax2.set_yticks(np.arange(285.0,311.0,3.0))
+ax2.plot(x_axis, WRF_May.values, 'b-', label='precip,May')
+ax2.plot(x_axis, WRF_JJA.values, 'b--', label='precip,JJA')
+ax2.set_yticks(np.arange(0.0,9.1,1.0))
 ax2.set_xticks(np.arange(0.0,24.1,3.0))
-ax2.set(xlabel='UTC(hr)', ylabel='precip SGP obs, mm/day')
+ax2.set(xlabel='UTC(hr)', ylabel='WRF precip, mm/day')
 ax2.grid()
 ax2.legend(loc='upper right')
+
+ax3 = fig.add_subplot(3,1,3)
+ax3.text(s='precip,SGP,ARMBE2D', x=0, y=1.02, ha='left', va='bottom', \
+        fontsize=fontsize, transform=ax3.transAxes)
+ax3.plot(x_axis, ARM_May.values, 'k-', label='precip,May')
+ax3.plot(x_axis, ARM_JJA.values, 'k--', label='precip,JJA')
+ax3.set_yticks(np.arange(0.0,9.1,1.0))
+ax3.set_xticks(np.arange(0.0,24.1,3.0))
+ax3.set(xlabel='UTC(hr)', ylabel='precip SGP obs, mm/day')
+ax3.grid()
+ax3.legend(loc='upper right')
 
 fig.savefig("../Figure/Precip.Diurnal.WRF_vs_ARM_SGP.png",dpi=600)
 plt.show()
