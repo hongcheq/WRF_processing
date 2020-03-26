@@ -63,6 +63,13 @@ SMOIS_WRF_SGP = SMOIS_WRF_daily.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lo
 SMOIS_WRF_SGP.attrs['units'] = "m3/m3"
 #print(SMOIS_WRF_SGP)
 
+### soil moisture at 0.25 depth
+SMOIS25_regrid = ds_SM_WRF['SMOIS_regrid'][:,1,:,:]   # depth 0 is 25-cm
+SMOIS25_WRF_daily = SMOIS25_regrid.resample(time='1D').mean(dim='time')
+SMOIS25_WRF_SGP = SMOIS25_WRF_daily.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
+SMOIS25_WRF_SGP.attrs['units'] = "m3/m3"
+#print(SMOIS25_WRF_SGP)
+
 ### evaporative fraction LH/(SH+LH)
 HFX_regrid = ds_WRF['HFX_regrid']
 EF_regrid = LH_regrid / (HFX_regrid+LH_regrid)
@@ -119,7 +126,7 @@ evap_ARM_ACC.attrs['units'] = "mm"
 evap_ARM_ACC.attrs['long_name'] = "accumulated total ET, converted from latent heat flux"
 #print(evap_ARM_ACC)
 
-### soil moisture
+### soil moisture at 5-cm
 SM05 = ds_ARMBE2D_05['soil_moisture_swats'][:,0,:,:] # 0 layer is 5-cm
 SM06 = ds_ARMBE2D_06['soil_moisture_swats'][:,0,:,:]
 SM07 = ds_ARMBE2D_07['soil_moisture_swats'][:,0,:,:]
@@ -128,6 +135,16 @@ SM_05678 = xr.concat([SM05, SM06, SM07, SM08], dim='time')
 SM_daily = SM_05678.resample(time='1D').mean('time')
 SM_ARM_SGP = SM_daily.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
 SM_ARM_SGP.attrs['units'] = "m3/m3"
+#print(SM_ARM_SGP)
+
+SM25_05 = ds_ARMBE2D_05['soil_moisture_swats'][:,2,:,:] # 2 layer is 25-cm
+SM25_06 = ds_ARMBE2D_06['soil_moisture_swats'][:,2,:,:]
+SM25_07 = ds_ARMBE2D_07['soil_moisture_swats'][:,2,:,:]
+SM25_08 = ds_ARMBE2D_08['soil_moisture_swats'][:,2,:,:]
+SM25_05678 = xr.concat([SM25_05, SM25_06, SM25_07, SM25_08], dim='time')
+SM25_daily = SM25_05678.resample(time='1D').mean('time')
+SM25_ARM_SGP = SM25_daily.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
+SM25_ARM_SGP.attrs['units'] = "m3/m3"
 #print(SM_ARM_SGP)
 
 ### evaporative fraction = LH/(SH+LH)
@@ -207,10 +224,12 @@ ax5.xaxis.set_major_formatter(dates_fmt)
 
 ### subplot(3,2,2)
 ax2 = fig.add_subplot(3,2,2)
-ax2.text(s='5-cm soil moisture, m3/m3', x=0, y=1.02, ha='left', va='bottom', \
+ax2.text(s='5-cm/25-cm soil moisture, m3/m3', x=0, y=1.02, ha='left', va='bottom', \
         fontsize=fontsize, transform=ax2.transAxes)
-ax2.plot(x_axis, SMOIS_WRF_SGP.values, 'b-', label='SMOIS, WRF')
-ax2.plot(x_axis, SM_ARM_SGP[0:122].values, 'k-', label='SM, ARMBE2D')
+ax2.plot(x_axis, SMOIS_WRF_SGP.values, 'b-', label='SMOIS,5cm,WRF')
+ax2.plot(x_axis, SM_ARM_SGP[0:122].values, 'k-', label='SM,5cm,ARMBE2D')
+ax2.plot(x_axis, SMOIS25_WRF_SGP.values, 'b+', label='SMOIS,25cm,WRF')
+ax2.plot(x_axis, SM25_ARM_SGP[0:122].values, 'k+', label='SM,25cm,ARMBE2D')
 ax2.grid()
 ax2.legend(loc='lower left',fontsize=fontsize)
 # format the ticks
@@ -250,7 +269,7 @@ ax6.xaxis.set_major_formatter(dates_fmt)
 
 #fig.savefig("../Figure/Figure15.WRF_vs_ARM_SGP.png",dpi=600, bbox_inches='tight')
 fig.savefig("../Figure/Figure15.WRF_vs_ARM_SGP.png",dpi=600)
-#plt.show()
+plt.show()
 
 
 
