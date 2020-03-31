@@ -55,6 +55,14 @@ SH_WRF_Aug = HFX_WRF_Aug.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).m
 SH_WRF_JJA = HFX_WRF_JJA.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
 SH_WRF_MJJA = HFX_WRF_MJJA.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
 
+### Add evaporative fraction here 
+EF_WRF_May = L_WRF_May / (L_WRF_May + SH_WRF_May)
+EF_WRF_Jun = L_WRF_Jun / (L_WRF_Jun + SH_WRF_Jun)
+EF_WRF_Jul = L_WRF_Jul / (L_WRF_Jul + SH_WRF_Jul)
+EF_WRF_Aug = L_WRF_Aug / (L_WRF_Aug + SH_WRF_Aug)
+EF_WRF_JJA = L_WRF_JJA / (L_WRF_JJA + SH_WRF_JJA)
+EF_WRF_MJJA = L_WRF_MJJA / (L_WRF_MJJA + SH_WRF_MJJA)
+
 ### ARM SGP obs: ARMBE2DGRID from Qi Tang
 
 latent05 = -ds_ARMBE2D_05['latent_heat_flux'] # make it positive going upward
@@ -99,14 +107,22 @@ SH_ARM_Aug = sensible_Aug.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).
 SH_ARM_JJA = sensible_JJA.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
 SH_ARM_MJJA = sensible_MJJA.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
 
+### Add evaporative fraction here ###
+EF_ARM_May = L_ARM_May / (L_ARM_May + SH_ARM_May)
+EF_ARM_Jun = L_ARM_Jun / (L_ARM_Jun + SH_ARM_Jun)
+EF_ARM_Jul = L_ARM_Jul / (L_ARM_Jul + SH_ARM_Jul)
+EF_ARM_Aug = L_ARM_Aug / (L_ARM_Aug + SH_ARM_Aug)
+EF_ARM_JJA = L_ARM_JJA / (L_ARM_JJA + SH_ARM_JJA)
+EF_ARM_MJJA = L_ARM_MJJA / (L_ARM_MJJA + SH_ARM_MJJA)
+
 ### Plot ###
 x_axis = ['May','Jun','Jul','Aug','JJA','MJJA']
 
-fig = plt.figure()
+fig = plt.figure(figsize=(7,9))
 fontsize = 7
 pos_adjust1 = 0.04
 
-ax1 = fig.add_subplot(2,1,1)
+ax1 = fig.add_subplot(3,1,1)
 ax1.text(s='Latent Heat Flux, W/m2', x=0, y=1.02, ha='left', va='bottom', \
         fontsize=fontsize, transform=ax1.transAxes)
 ax1.scatter(x_axis, [L_WRF_May, L_WRF_Jun, L_WRF_Jul, L_WRF_Aug, L_WRF_JJA, L_WRF_MJJA], c='k',marker='s', label='WRF')
@@ -117,7 +133,7 @@ ax1.set(xlabel='month category', ylabel='Latent heat flux, W/m2', title='WRF vs 
 ax1.grid()
 ax1.legend(loc='lower right')
 
-ax2 = fig.add_subplot(2,1,2)
+ax2 = fig.add_subplot(3,1,2)
 ax2.text(s='Sensible Heat Flux, W/m2', x=0, y=1.02, ha='left', va='bottom', \
         fontsize=fontsize, transform=ax2.transAxes)
 ax2.scatter(x_axis, [SH_WRF_May, SH_WRF_Jun, SH_WRF_Jul, SH_WRF_Aug, SH_WRF_JJA, SH_WRF_MJJA], c='k',marker='s', label='WRF')
@@ -126,8 +142,16 @@ ax2.set(xlabel='month category', ylabel='Sensible heat flux, W/m2')
 ax2.grid()
 ax2.legend(loc='lower right')
 
+ax3 = fig.add_subplot(3,1,3)
+ax3.text(s='Evaporative Fraction, unitless', x=0, y=1.02, ha='left', va='bottom', \
+        fontsize=fontsize, transform=ax3.transAxes)
+ax3.scatter(x_axis, [EF_WRF_May, EF_WRF_Jun, EF_WRF_Jul, EF_WRF_Aug, EF_WRF_JJA, EF_WRF_MJJA], c='k',marker='s', label='WRF')
+ax3.scatter(x_axis, [EF_ARM_May, EF_ARM_Jun, EF_ARM_Jul, EF_ARM_Aug, EF_ARM_JJA, EF_ARM_MJJA], c='r', marker='d', label='ARM obs')
+ax3.set(xlabel='month category', ylabel='Evaporative Fraction, unitless')
+ax3.grid()
+ax3.legend(loc='lower right')
 
-fig.savefig("../Figure/Figure7.SH.LH,WRF_vs_ARM_SGP.png",dpi=600)
+fig.savefig("../Figure/Figure7.SH.LH.EF.WRF_vs_ARM_SGP.png",dpi=600)
 plt.show()
 
 
