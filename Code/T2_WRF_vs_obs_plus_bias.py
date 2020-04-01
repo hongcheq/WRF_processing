@@ -2,7 +2,6 @@
 Function: WRF output vs obs
 Date: 20200322
 '''
-
 import xarray as xr
 import numpy as np
 import matplotlib.pyplot as plt
@@ -20,8 +19,7 @@ except AttributeError:
 else:
     # Handle target environment that doesn't support HTTPS verification
     ssl._create_default_https_context = _create_unverified_https_context
-### 
-
+###
 
 VAR_WRF_str = "T2_regrid"
 VAR_obs_str = "t2m"
@@ -67,7 +65,7 @@ print(VAR_obs)
 ## VAR_WRF shows nan values for many _FillValues, does this suggest it handles _FillValues
 ## and NaN values automatically? Put aside for now ##
 
-# Calculate monthly values 
+# Calculate monthly values
 VAR_WRF_month = VAR_WRF.resample(Time='MS').mean(dim='Time')
 VAR_obs_month = VAR_obs.resample(Time='MS').mean(dim='Time')
 print(VAR_WRF_month)
