@@ -10,6 +10,8 @@ import pandas
 
 ds_WRF = xr.open_dataset('/home/qin5/Data/WRF.postprocessing.extract.hourly.nc')
 
+ds_NOAA = xr.open_dataset('/home/qin5/Data/CAUSES_obs/noaa_conus_T2M_temperature_1p0deg_hourly_2011_MAMJJA.nc')
+
 ds_ARMBE2D_05 = xr.open_dataset('/home/qin5/Data/ARMBE2DGRID/sgparmbe2dgridX1.c1.20110501.000000.nc')
 ds_ARMBE2D_06 = xr.open_dataset('/home/qin5/Data/ARMBE2DGRID/sgparmbe2dgridX1.c1.20110601.000000.nc')
 ds_ARMBE2D_07 = xr.open_dataset('/home/qin5/Data/ARMBE2DGRID/sgparmbe2dgridX1.c1.20110701.000000.nc')
@@ -20,6 +22,10 @@ lat_1 = 35.0
 lat_2 = 38.0
 lon_1 = -99.0
 lon_2 = -96.0
+
+# for 360 longitude
+lon_1_360 = 261.0
+lon_2_360 = 264.0
 
 ### WRF calculate diurnal cycle at ARM SGP site 
 T2_regrid = ds_WRF['T2_regrid']
@@ -38,6 +44,38 @@ WRF_Jul = T2_WRF_Jul.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(
 WRF_Aug = T2_WRF_Aug.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
 WRF_JJA = T2_WRF_JJA.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
 WRF_MJJA = T2_WRF_MJJA.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
+
+### ------ NOAA obs T2m -----
+t2m = ds_NOAA['t2m']
+t2m = t2m.rename({'t':'time'}).rename({'y':'lat'}).rename({'x':'lon'})
+t2m['lon'] = ds_NOAA['Longitude'].values
+t2m['lat'] = ds_NOAA['Latitude'].values
+
+## In the original file, the time is not properly encoded (units not conformed to CF standard?)
+##  datetime type is required for the monthly resmaple calculation.
+values_time = ds_NOAA['Time'].values
+attrs_time = {'units': 'hours since 2011-04-01 00:00:00'}
+ds_time = xr.Dataset({'time': ('time', values_time, attrs_time) })
+dt_format_time = xr.decode_cf(ds_time)
+
+t2m.coords['time'] = dt_format_time['time']
+t2m = t2m + 273.15
+t2m.attrs['units'] = "K"
+T2_NOAA_month = t2m.resample(time='MS').mean(dim='time')
+
+T2_NOAA_May = T2_NOAA_month[1,:,:]
+T2_NOAA_Jun = T2_NOAA_month[2,:,:]
+T2_NOAA_Jul = T2_NOAA_month[3,:,:]
+T2_NOAA_Aug = T2_NOAA_month[4,:,:]
+T2_NOAA_JJA = (T2_NOAA_Jun + T2_NOAA_Jul + T2_NOAA_Aug)/3.0
+T2_NOAA_MJJA = (T2_NOAA_May + T2_NOAA_Jun + T2_NOAA_Jul + T2_NOAA_Aug)/4.0
+
+NOAA_May = T2_NOAA_May.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1_360, lon_2_360)).mean(dim='lat').mean(dim='lon')
+NOAA_Jun = T2_NOAA_Jun.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1_360, lon_2_360)).mean(dim='lat').mean(dim='lon')
+NOAA_Jul = T2_NOAA_Jul.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1_360, lon_2_360)).mean(dim='lat').mean(dim='lon')
+NOAA_Aug = T2_NOAA_Aug.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1_360, lon_2_360)).mean(dim='lat').mean(dim='lon')
+NOAA_JJA = T2_NOAA_JJA.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1_360, lon_2_360)).mean(dim='lat').mean(dim='lon')
+NOAA_MJJA = T2_NOAA_MJJA.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1_360, lon_2_360)).mean(dim='lat').mean(dim='lon')
 
 ### ARM SGP obs: ARMBE2DGRID from Qi Tang
 
@@ -74,14 +112,14 @@ ax1.text(s='T2m, K', x=0, y=1.02, ha='left', va='bottom', \
         fontsize=fontsize, transform=ax1.transAxes)
 ax1.scatter(x_axis, [WRF_May, WRF_Jun, WRF_Jul, WRF_Aug, WRF_JJA, WRF_MJJA], c='k',marker='s', label='WRF')
 ax1.scatter(x_axis, [ARM_May, ARM_Jun, ARM_Jul, ARM_Aug, ARM_JJA, ARM_MJJA], c='r', marker='d', label='ARM obs')
+ax1.scatter(x_axis, [NOAA_May, NOAA_Jun, NOAA_Jul, NOAA_Aug, NOAA_JJA, NOAA_MJJA], c='b', marker='d', label='NOAA obs')
 #ax1.set_yticks(np.arange(0.0,4.6,0.5))
 #ax1.set_xticks(np.arange(0.0,24.1,3.0))
 ax1.set(xlabel='month category', ylabel='T2m, K', title='T2m, WRF vs ARM SGP')
 ax1.grid()
 ax1.legend(loc='lower right')
 
-
-fig.savefig("../Figure/Figure6.T2m,WRF_vs_ARM_SGP.png",dpi=600)
+fig.savefig("../Figure/Figure6.T2m.WRF_vs_ARM_SGP.png",dpi=600)
 plt.show()
 
 
