@@ -29,11 +29,11 @@ RAIN_regrid.attrs['units'] = "mm/day"
 RAIN_May = RAIN_regrid[:738,:,:]
 RAIN_JJA = RAIN_regrid[738:,:,:]
 
-RAIN_WRF_May = RAIN_May.groupby('time.hour').mean()
-RAIN_WRF_JJA = RAIN_JJA.groupby('time.hour').mean()
+RAIN_WRF_May = RAIN_May.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
+RAIN_WRF_JJA = RAIN_JJA.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
 
-WRF_May = RAIN_WRF_May.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
-WRF_JJA = RAIN_WRF_JJA.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
+WRF_May = RAIN_WRF_May.groupby('time.hour').mean()
+WRF_JJA = RAIN_WRF_JJA.groupby('time.hour').mean()
 
 ### ARM SGP obs: ARMBE2DGRID from Qi Tang
 
@@ -46,17 +46,31 @@ precip_0678 = xr.concat([precip06, precip07, precip08], dim='time')
 precip_0678 = precip_0678 * 24.0 # from mm/hr to mm/day
 precip_0678.attrs['units'] = "mm/day"
 
-precip_May = precip05.groupby('time.hour').mean()
-precip_JJA = precip_0678.groupby('time.hour').mean()
+precip_May = precip05.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
+precip_JJA = precip_0678.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
 
-ARM_May = precip_May.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
-ARM_JJA = precip_JJA.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
+### the time variable in ARMBE2DGRID is not-so-regular, 
+### using groupby('time.hour').mean() may entail issues, just use for loop
+###ARM_May = precip_May.groupby('time.hour').mean()
+###ARM_JJA = precip_JJA.groupby('time.hour').mean()
+
+ARM_May = np.zeros(24)
+ARM_JJA = np.zeros(24)
+
+for i in np.arange(0,31,1):
+    ARM_May = ARM_May + precip_May[i*24:i*24+24].values
+ARM_May = ARM_May / 31.0
+
+for i in np.arange(0,92,1):
+    ARM_JJA = ARM_JJA + precip_JJA[i*24:i*24+24].values
+ARM_JJA = ARM_JJA / 92.0
+
+print(ARM_May)
+print(ARM_JJA)
 
 ### WRF bias in May, and JJA ###
 bias_May = WRF_May - ARM_May
 bias_JJA = WRF_JJA - ARM_JJA
-#print(bias_May)
-#print(bias_JJA)
 
 ### Plot ###
 x_axis = WRF_May.coords['hour']
@@ -91,8 +105,8 @@ ax2.legend(loc='upper right')
 ax3 = fig.add_subplot(3,1,3)
 ax3.text(s='precip,SGP,ARMBE2D', x=0, y=1.02, ha='left', va='bottom', \
         fontsize=fontsize, transform=ax3.transAxes)
-ax3.plot(x_axis, ARM_May.values, 'k-', label='precip,May')
-ax3.plot(x_axis, ARM_JJA.values, 'k--', label='precip,JJA')
+ax3.plot(x_axis, ARM_May, 'k-', label='precip,May')
+ax3.plot(x_axis, ARM_JJA, 'k--', label='precip,JJA')
 ax3.set_yticks(np.arange(0.0,9.1,1.0))
 ax3.set_xticks(np.arange(0.0,24.1,3.0))
 ax3.set(xlabel='UTC(hr)', ylabel='precip SGP obs, mm/day')
