@@ -46,7 +46,8 @@ temp02 = ds_ARMBE2D_02['temp']
 temp03 = ds_ARMBE2D_03['temp']
 temp04 = ds_ARMBE2D_04['temp']
 
-temp05 = ds_ARMBE2D_05['temp']
+#temp05 = ds_ARMBE2D_05['temp']
+temp05 = ds_ARMBE2D_05['temp'][48:,:,:]  # remove the first 48 hours, debug testing, the first 48-hours erroneous?
 temp06 = ds_ARMBE2D_06['temp']
 temp07 = ds_ARMBE2D_07['temp']
 temp08 = ds_ARMBE2D_08['temp']
@@ -134,7 +135,7 @@ ax3.set(xlabel='UTC(hr)', ylabel='T2m WRF, K')
 ax3.grid()
 ax3.legend(loc='lower right')
 
-fig.savefig("../Figure/T2m.WRF_vs_ARM_SGP.png",dpi=600)
+fig.savefig("../Figure/T2m.WRF_vs_ARM_SGP.May_first_few_days_removed.png",dpi=600)
 plt.show()
 
 
