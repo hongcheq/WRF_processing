@@ -31,15 +31,15 @@ HFX_JJA = HFX_regrid[738:,:,:]
 LH_May = LH_regrid[:738,:,:]
 LH_JJA = LH_regrid[738:,:,:]
 
-HFX_WRF_May = HFX_May.groupby('time.hour').mean()
-HFX_WRF_JJA = HFX_JJA.groupby('time.hour').mean()
-LH_WRF_May = LH_May.groupby('time.hour').mean()
-LH_WRF_JJA = LH_JJA.groupby('time.hour').mean()
+HFX_WRF_May = HFX_May.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
+HFX_WRF_JJA = HFX_JJA.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
+LH_WRF_May = LH_May.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
+LH_WRF_JJA = LH_JJA.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
 
-WRF_May_SH = HFX_WRF_May.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
-WRF_JJA_SH = HFX_WRF_JJA.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
-WRF_May_LH = LH_WRF_May.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
-WRF_JJA_LH = LH_WRF_JJA.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
+WRF_May_SH = HFX_WRF_May.groupby('time.hour').mean()
+WRF_JJA_SH = HFX_WRF_JJA.groupby('time.hour').mean()
+WRF_May_LH = LH_WRF_May.groupby('time.hour').mean()
+WRF_JJA_LH = LH_WRF_JJA.groupby('time.hour').mean()
 
 ### ARM SGP obs: ARMBE2DGRID from Qi Tang
 
@@ -56,15 +56,34 @@ LH08 = -ds_ARMBE2D_08['latent_heat_flux']
 SH_0678 = xr.concat([SH06, SH07, SH08], dim='time')
 LH_0678 = xr.concat([LH06, LH07, LH08], dim='time')
 
-SH_May = SH05.groupby('time.hour').mean()
-SH_JJA = SH_0678.groupby('time.hour').mean()
-LH_May = LH05.groupby('time.hour').mean()
-LH_JJA = LH_0678.groupby('time.hour').mean()
+SH_May = SH05.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
+SH_JJA = SH_0678.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
+LH_May = LH05.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
+LH_JJA = LH_0678.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
 
-ARM_May_SH = SH_May.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
-ARM_JJA_SH = SH_JJA.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
-ARM_May_LH = LH_May.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
-ARM_JJA_LH = LH_JJA.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
+### ARMBE2DGRID time variable values are not regular (unlike WRF outputs)
+### you should avoid using groupby('time.hour').mean() to calculate the diurnal cycle
+ARM_May_SH = np.zeros(24)
+ARM_JJA_SH = np.zeros(24)
+ARM_May_LH = np.zeros(24)
+ARM_JJA_LH = np.zeros(24)
+
+for i in np.arange(0,31,1):
+    ARM_May_SH = ARM_May_SH + SH_May[0+i*24:i*24+24].values 
+    ARM_May_LH = ARM_May_LH + LH_May[0+i*24:i*24+24].values
+ARM_May_SH = ARM_May_SH / 31.0
+ARM_May_LH = ARM_May_LH / 31.0
+
+for i in np.arange(0,92,1):
+    ARM_JJA_SH = ARM_JJA_SH + SH_JJA[i*24:i*24+24].values
+    ARM_JJA_LH = ARM_JJA_LH + LH_JJA[i*24:i*24+24].values
+ARM_JJA_SH = ARM_JJA_SH / 92.0
+ARM_JJA_LH = ARM_JJA_LH / 92.0
+
+#ARM_May_SH = SH_May.groupby('time.hour').mean()
+#ARM_JJA_SH = SH_JJA.groupby('time.hour').mean()
+#ARM_May_LH = LH_May.groupby('time.hour').mean()
+#ARM_JJA_LH = LH_JJA.groupby('time.hour').mean()
 
 ### WRF bias in May, and JJA ###
 bias_May_SH = WRF_May_SH - ARM_May_SH
@@ -95,10 +114,10 @@ ax1.grid()
 ax2 = fig.add_subplot(2,1,2)
 #ax2.text(s='SensibleHeatFlux,SGP,ARMBE2D', x=0, y=1.02, ha='left', va='bottom', \
 #        fontsize=fontsize, transform=ax2.transAxes)
-ax2.plot(x_axis, ARM_May_SH.values,'r-', label='SH,May')
-ax2.plot(x_axis, ARM_JJA_SH.values, 'r--',  label='SH,JJA')
-ax2.plot(x_axis, ARM_May_LH.values,'b-', label='LH,May')
-ax2.plot(x_axis, ARM_JJA_LH.values, 'b--',  label='LH,JJA')
+ax2.plot(x_axis, ARM_May_SH,'r-', label='SH,May')
+ax2.plot(x_axis, ARM_JJA_SH, 'r--',  label='SH,JJA')
+ax2.plot(x_axis, ARM_May_LH,'b-', label='LH,May')
+ax2.plot(x_axis, ARM_JJA_LH, 'b--',  label='LH,JJA')
 ax2.set_yticks(np.arange(-100.0,501.0,100.0))
 ax2.set_xticks(np.arange(0.0,24.1,3.0))
 ax2.set(xlabel='UTC(hr)', ylabel='SGP obs, W/m2')
