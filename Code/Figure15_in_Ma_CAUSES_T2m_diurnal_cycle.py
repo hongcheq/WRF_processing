@@ -137,6 +137,7 @@ SM_ARM_SGP = SM_daily.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean
 SM_ARM_SGP.attrs['units'] = "m3/m3"
 #print(SM_ARM_SGP)
 
+### soil moisture at 25-cm
 SM25_05 = ds_ARMBE2D_05['soil_moisture_swats'][:,2,:,:] # 2 layer is 25-cm
 SM25_06 = ds_ARMBE2D_06['soil_moisture_swats'][:,2,:,:]
 SM25_07 = ds_ARMBE2D_07['soil_moisture_swats'][:,2,:,:]
@@ -146,6 +147,16 @@ SM25_daily = SM25_05678.resample(time='1D').mean('time')
 SM25_ARM_SGP = SM25_daily.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
 SM25_ARM_SGP.attrs['units'] = "m3/m3"
 #print(SM_ARM_SGP)
+
+### soil moisture from ebbr measurements (only 2.5cm)
+SM05_ebbr = ds_ARMBE2D_05['soil_moisture_ebbr']
+SM06_ebbr = ds_ARMBE2D_06['soil_moisture_ebbr']
+SM07_ebbr = ds_ARMBE2D_07['soil_moisture_ebbr']
+SM08_ebbr = ds_ARMBE2D_08['soil_moisture_ebbr']
+SM_05678_ebbr = xr.concat([SM05_ebbr, SM06_ebbr, SM07_ebbr, SM08_ebbr], dim='time')
+SM_daily_ebbr = SM_05678_ebbr.resample(time='1D').mean('time')
+SM_ARM_SGP_ebbr = SM_daily_ebbr.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
+SM_ARM_SGP_ebbr.attrs['units'] = "m3/m3"
 
 ### evaporative fraction = LH/(SH+LH)
 sensible05 = -ds_ARMBE2D_05['sensible_heat_flux'] # upward means positive
@@ -182,7 +193,7 @@ days = mdates.DayLocator()
 dates_fmt = mdates.DateFormatter('%m-%d')
 
 fig = plt.figure(figsize=(9,10))
-fontsize = 8
+fontsize = 6
 pos_adjust1 = 0.02
 
 ax1 = fig.add_subplot(3,2,1)
@@ -224,12 +235,15 @@ ax5.xaxis.set_major_formatter(dates_fmt)
 
 ### subplot(3,2,2)
 ax2 = fig.add_subplot(3,2,2)
-ax2.text(s='5-cm/25-cm soil moisture, m3/m3', x=0, y=1.02, ha='left', va='bottom', \
+ax2.text(s='soil moisture, m3/m3', x=0, y=1.02, ha='left', va='bottom', \
         fontsize=fontsize, transform=ax2.transAxes)
 ax2.plot(x_axis, SMOIS_WRF_SGP.values, 'b-', label='SMOIS,5cm,WRF')
-ax2.plot(x_axis, SM_ARM_SGP[0:122].values, 'k-', label='SM,5cm,ARMBE2D')
+ax2.plot(x_axis, SM_ARM_SGP[0:122].values, 'k-', label='SM_swats,5cm,ARMBE2D')
 ax2.plot(x_axis, SMOIS25_WRF_SGP.values, 'b+', label='SMOIS,25cm,WRF')
-ax2.plot(x_axis, SM25_ARM_SGP[0:122].values, 'k+', label='SM,25cm,ARMBE2D')
+ax2.plot(x_axis, SM25_ARM_SGP[0:122].values, 'k+', label='SM_swats,25cm,ARMBE2D')
+ax2.plot(x_axis, SM_ARM_SGP_ebbr[0:122].values, 'k--', label='SM_ebbr,2.5cm,ARMBE2D')
+#ax2.set_ylim(0,0.4)
+#ax2.set_yticks([0.0,0.1,0.2,0.3,0.4])
 ax2.grid()
 ax2.legend(loc='lower left',fontsize=fontsize)
 # format the ticks
@@ -253,7 +267,6 @@ ax4.xaxis.set_major_formatter(dates_fmt)
 #print(T2_WRF_SGP.values)
 #print(temp_ARM_SGP.values)
 #print(T2_WRF_SGP.values - temp_ARM_SGP[0:122].values)
-#exit()
 
 ax6 = fig.add_subplot(3,2,6)
 ax6.text(s='T2 bias, WRF-obs, K', x=0, y=1.02, ha='left', va='bottom', \
