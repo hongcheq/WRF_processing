@@ -39,6 +39,7 @@ T2_WRF_JJA = T2_JJA.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(d
 ### Lessons learned: the groupby('time.hour') command requires the time has regular values, just check
 print(T2_WRF_May.coords['time'][0:24])
 print(T2_WRF_JJA.coords['time'][0:24])
+
 ### the time has regular values, so you can use the following command
 WRF_May = T2_WRF_May.groupby('time.hour').mean()
 WRF_JJA = T2_WRF_JJA.groupby('time.hour').mean()
