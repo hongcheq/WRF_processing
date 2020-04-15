@@ -13,6 +13,8 @@ ds_WRF = xr.open_dataset('/home/qin5/Data/WRF.postprocessing.extract.hourly.nc')
 ds_FLUXNET = xr.open_dataset('/home/qin5/Data/CAUSES_obs/LE_H_FLUXNET_2011_conus_1dgrid.nc',\
         decode_times=False)
 
+ds_GLEAM = xr.open_dataset('/home/qin5/Data/GLEAM/E_2011_GLEAM.processed.daily.nc')
+
 ds_ARMBE2D_05 = xr.open_dataset('/home/qin5/Data/ARMBE2DGRID/sgparmbe2dgridX1.c1.20110501.000000.nc')
 ds_ARMBE2D_06 = xr.open_dataset('/home/qin5/Data/ARMBE2DGRID/sgparmbe2dgridX1.c1.20110601.000000.nc')
 ds_ARMBE2D_07 = xr.open_dataset('/home/qin5/Data/ARMBE2DGRID/sgparmbe2dgridX1.c1.20110701.000000.nc')
@@ -111,6 +113,46 @@ EF_FLUX_Aug = L_FLUX_Aug / (L_FLUX_Aug + SH_FLUX_Aug)
 EF_FLUX_JJA = L_FLUX_JJA / (L_FLUX_JJA + SH_FLUX_JJA)
 EF_FLUX_MJJA = L_FLUX_MJJA / (L_FLUX_MJJA + SH_FLUX_MJJA)
 
+### add GLEAM model evaporation for LH to constain the uncertainties
+E_a_regrid = ds_GLEAM['E_a_regrid']
+E_b_regrid = ds_GLEAM['E_b_regrid']
+
+E_a_regrid = E_a_regrid * 2265000.0 / (3600*24) # from mm/hr to W/m2
+E_a_regrid.attrs['units'] = "W/m2"
+E_b_regrid = E_b_regrid * 2265000.0 / (3600*24) # from mm/hr to W/m2
+E_b_regrid.attrs['units'] = "W/m2"
+
+E_a_month = E_a_regrid.resample(time='MS').mean(dim='time')
+E_b_month = E_b_regrid.resample(time='MS').mean(dim='time')
+
+E_a_May = E_a_month[4,:,:]
+E_a_Jun = E_a_month[5,:,:]
+E_a_Jul = E_a_month[6,:,:]
+E_a_Aug = E_a_month[7,:,:]
+E_a_JJA = (E_a_Jun + E_a_Jul + E_a_Aug)/3.0
+E_a_MJJA = (E_a_May + E_a_Jun + E_a_Jul + E_a_Aug)/4.0
+
+E_b_May = E_b_month[4,:,:]
+E_b_Jun = E_b_month[5,:,:]
+E_b_Jul = E_b_month[6,:,:]
+E_b_Aug = E_b_month[7,:,:]
+E_b_JJA = (E_b_Jun + E_b_Jul + E_b_Aug)/3.0
+E_b_MJJA = (E_b_May + E_b_Jun + E_b_Jul + E_b_Aug)/4.0
+
+Ea_GLEAM_May = E_a_May.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
+Ea_GLEAM_Jun = E_a_Jun.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
+Ea_GLEAM_Jul = E_a_Jul.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
+Ea_GLEAM_Aug = E_a_Aug.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
+Ea_GLEAM_JJA = E_a_JJA.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
+Ea_GLEAM_MJJA = E_a_MJJA.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
+
+Eb_GLEAM_May = E_b_May.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
+Eb_GLEAM_Jun = E_b_Jun.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
+Eb_GLEAM_Jul = E_b_Jul.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
+Eb_GLEAM_Aug = E_b_Aug.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
+Eb_GLEAM_JJA = E_b_JJA.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
+Eb_GLEAM_MJJA = E_b_MJJA.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
+
 ### ---------------------
 ### ARM SGP obs: ARMBE2DGRID from Qi Tang
 
@@ -177,7 +219,9 @@ ax1.text(s='Latent Heat Flux, W/m2', x=0, y=1.02, ha='left', va='bottom', \
 ax1.scatter(x_axis, [L_WRF_May, L_WRF_Jun, L_WRF_Jul, L_WRF_Aug, L_WRF_JJA, L_WRF_MJJA], c='k',marker='s', label='WRF')
 ax1.scatter(x_axis, [L_ARM_May, L_ARM_Jun, L_ARM_Jul, L_ARM_Aug, L_ARM_JJA, L_ARM_MJJA], c='r', marker='d', label='ARM obs')
 ax1.scatter(x_axis, [L_FLUX_May, L_FLUX_Jun, L_FLUX_Jul, L_FLUX_Aug, L_FLUX_JJA, L_FLUX_MJJA], c='b', marker='d', label='FLUXNET obs')
-#ax1.set_yticks(np.arange(0.0,4.6,0.5))
+ax1.scatter(x_axis, [Ea_GLEAM_May, Ea_GLEAM_Jun, Ea_GLEAM_Jul, Ea_GLEAM_Aug, Ea_GLEAM_JJA, Ea_GLEAM_MJJA], c='y', marker='d', label='GLEAM E_va')
+ax1.scatter(x_axis, [Eb_GLEAM_May, Eb_GLEAM_Jun, Eb_GLEAM_Jul, Eb_GLEAM_Aug, Eb_GLEAM_JJA, Eb_GLEAM_MJJA], c='g', marker='d', label='GLEAM E_vb')
+ax1.set_yticks(np.arange(40.0,170,20))
 #ax1.set_xticks(np.arange(0.0,24.1,3.0))
 ax1.set(xlabel='month category', ylabel='Latent heat flux, W/m2', title='WRF vs ARM SGP')
 ax1.grid()
@@ -203,7 +247,7 @@ ax3.set(xlabel='month category', ylabel='Evaporative Fraction, unitless')
 ax3.grid()
 ax3.legend(loc='lower left')
 
-fig.savefig("../Figure/Figure7.SH.LH.EF.WRF_vs_ARM_SGP.png",dpi=600)
+fig.savefig("../Figure/Figure7.SH.LH.EF.WRF_vs_ARM_SGP_FLUXNET_GLEAM.png",dpi=600)
 plt.show()
 
 

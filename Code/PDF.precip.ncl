@@ -96,7 +96,7 @@ precip_ARM_SGP_Aug_pdf = pdfx(precip_ARM_SGP_Aug,bin_n,opt)
 precip_ARM_SGP_Aug_pdf = precip_ARM_SGP_Aug_pdf / bin_width
 
 ;;--------------plot ------------
-wks = gsn_open_wks("png","precipPDF")
+wks = gsn_open_wks("png","../Figure/PDF.precip")
 
 plot = new(4,graphic)
 
@@ -144,22 +144,6 @@ resP = True
 
 resP@amJust = "TopRight"
 gsn_panel(wks,plot,(/1,4/),resP)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 end

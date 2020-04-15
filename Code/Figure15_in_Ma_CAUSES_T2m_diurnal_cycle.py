@@ -17,6 +17,10 @@ ds_ARMBE2D_06 = xr.open_dataset('/home/qin5/Data/ARMBE2DGRID/sgparmbe2dgridX1.c1
 ds_ARMBE2D_07 = xr.open_dataset('/home/qin5/Data/ARMBE2DGRID/sgparmbe2dgridX1.c1.20110701.000000.nc')
 ds_ARMBE2D_08 = xr.open_dataset('/home/qin5/Data/ARMBE2DGRID/sgparmbe2dgridX1.c1.20110801.000000.nc')
 
+ds_pr_stage4 = xr.open_dataset('/home/qin5/Data/Precip_StageIV/Precip_Stage_IV.2011045678.postprocessing.extract.hourly.nc')
+
+ds_GLEAM = xr.open_dataset('/home/qin5/Data/GLEAM/E_2011_GLEAM.processed.daily.nc')
+
 ## Figure 8 in Ma et al 2018, average over 35-38N, 99-96W, consistent with ARMBE2D from Qi Tang
 lat_1 = 35.0
 lat_2 = 38.0
@@ -194,6 +198,29 @@ temp_daily = temp_05678.resample(time='1D').mean('time')
 temp_ARM_SGP = temp_daily.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
 #print(temp_ARM_SGP)
 
+### Stage IV precip dataset
+pr_st4 = ds_pr_stage4['precip_st4_regrid'][718:,:,:]  # skip Apr values
+#print(pr_st4)
+
+pr_st4_daily = pr_st4.resample(time='1D').mean('time')
+pr_st4_ARM_SGP = pr_st4_daily.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
+pr_st4_ARM_SGP = pr_st4_ARM_SGP * 24.0 # from mm/hr to mm/day
+pr_st4_ARM_SGP.attrs['units'] = "mm/day"
+#print(pr_st4_ARM_SGP)
+
+### Add GLEAM Evaporation, which can be convert to LHFLX W/m2
+E_a = ds_GLEAM['E_a_regrid'][120:243,:,:]   # May-Aug
+E_b = ds_GLEAM['E_b_regrid'][120:243,:,:]
+
+E_a = E_a * 2265000.0 / (3600*24)   # from Evaporation mm/day to W/m2
+E_a.attrs['units'] = "W/m2"
+
+E_b = E_b * 2265000.0 / (3600*24)   # from Evaporation mm/day to W/m2
+E_b.attrs['units'] = "W/m2"
+
+E_a_ARM_SGP = E_a.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
+E_b_ARM_SGP = E_b.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
+
 ### ---------------------------
 ### Plot ###
 x_axis = RAIN_WRF_ACC.coords['time']
@@ -205,11 +232,11 @@ days = mdates.DayLocator()
 #dates_fmt = mdates.DateFormatter('%Y-%m-%d')
 dates_fmt = mdates.DateFormatter('%m-%d')
 
-fig = plt.figure(figsize=(10,10))
+fig = plt.figure(figsize=(13,13))
 fontsize = 6
 pos_adjust1 = 0.02
 
-ax1 = fig.add_subplot(3,3,1)
+ax1 = fig.add_subplot(4,3,1)
 ax1.text(s='Accumulated precip, mm', x=0, y=1.02, ha='left', va='bottom', \
         fontsize=fontsize, transform=ax1.transAxes)
 ax1.plot(x_axis, RAIN_WRF_ACC.values, 'b-', label='precip, WRF')
@@ -223,7 +250,7 @@ ax1.xaxis.set_major_locator(months)
 ax1.xaxis.set_major_formatter(dates_fmt)
 
 ### subplot (3,3,2)
-ax2 = fig.add_subplot(3,3,2)
+ax2 = fig.add_subplot(4,3,2)
 ax2.text(s='Accumulated ET (converted from LatentHeatFlux), mm', x=0, y=1.02, ha='left', va='bottom', \
         fontsize=fontsize, transform=ax2.transAxes)
 ax2.plot(x_axis, evap_WRF_ACC.values, 'b-', label='ET, WRF')
@@ -234,8 +261,8 @@ ax2.legend(loc='upper left',fontsize=fontsize)
 ax2.xaxis.set_major_locator(months)
 ax2.xaxis.set_major_formatter(dates_fmt)
 
-### subplot (3,3,5)
-ax3 = fig.add_subplot(3,3,3)
+### subplot (3,3,3)
+ax3 = fig.add_subplot(4,3,3)
 ax3.text(s='P-E (Accumulated), mm', x=0, y=1.02, ha='left', va='bottom', \
         fontsize=fontsize, transform=ax3.transAxes)
 ax3.plot(x_axis, (RAIN_WRF_ACC.values - evap_WRF_ACC.values), 'b-', label='P-E, WRF')
@@ -247,7 +274,7 @@ ax3.xaxis.set_major_locator(months)
 ax3.xaxis.set_major_formatter(dates_fmt)
 
 ### subplot(3,3,4)
-ax4 = fig.add_subplot(3,3,4)
+ax4 = fig.add_subplot(4,3,4)
 ax4.text(s='soil moisture, m3/m3', x=0, y=1.02, ha='left', va='bottom', \
         fontsize=fontsize, transform=ax4.transAxes)
 ax4.plot(x_axis, SMOIS_WRF_SGP.values, 'b-', label='SMOIS,5cm,WRF')
@@ -264,7 +291,7 @@ ax4.xaxis.set_major_locator(months)
 ax4.xaxis.set_major_formatter(dates_fmt)
 
 ### subplot(3,3,4)
-ax5 = fig.add_subplot(3,3,5)
+ax5 = fig.add_subplot(4,3,5)
 ax5.text(s='EF bias, WRF-obs, (EF=LH/(SH+LH)), unitless', x=0, y=1.02, ha='left', va='bottom', \
         fontsize=fontsize, transform=ax5.transAxes)
 ax5.plot(x_axis, (EF_WRF_SGP.values - EF_ARM_SGP[0:122].values) , 'g-', label='EF bias')
@@ -278,7 +305,7 @@ ax5.xaxis.set_major_formatter(dates_fmt)
 ax5.axhline(linewidth=1.5, color='k')
 
 ### suplot(3,3,6)
-ax6 = fig.add_subplot(3,3,6)
+ax6 = fig.add_subplot(4,3,6)
 ax6.text(s='T2 bias, WRF-obs, K', x=0, y=1.02, ha='left', va='bottom', \
         fontsize=fontsize, transform=ax6.transAxes)
 ax6.plot(x_axis, (T2_WRF_SGP.values - temp_ARM_SGP[0:122].values) , 'r-', label='T2m bias')
@@ -290,7 +317,7 @@ ax6.xaxis.set_major_formatter(dates_fmt)
 ax6.axhline(linewidth=1.5, color='k')
 
 ### Add precipitation rate
-ax7 = fig.add_subplot(3,3,7)
+ax7 = fig.add_subplot(4,3,7)
 ax7.text(s='Precip rate bias, mm/day', x=0, y=1.02, ha='left', va='bottom', \
         fontsize=fontsize, transform=ax7.transAxes)
 ax7.plot(x_axis, RAIN_WRF_SGP.values - precip_ARM_SGP[0:122].values, 'k-', label='precip rate, WRF-ARMBE2D')
@@ -303,7 +330,7 @@ ax7.xaxis.set_major_formatter(dates_fmt)
 ax7.axhline(linewidth=1.5, color='k')
 
 ### Add latent heat flux
-ax8 = fig.add_subplot(3,3,8)
+ax8 = fig.add_subplot(4,3,8)
 ax8.text(s='Latent heat flux bias, W/m2', x=0, y=1.02, ha='left', va='bottom', \
         fontsize=fontsize, transform=ax8.transAxes)
 ax8.plot(x_axis, LH_WRF_SGP_W_m2.values - latent_ARM_SGP_W_m2[0:122].values , 'k-', label='LH, WRF-ARMBE2D')
@@ -316,7 +343,7 @@ ax8.xaxis.set_major_formatter(dates_fmt)
 ax8.axhline(linewidth=1.5, color='k')
 
 ### Add sensible heat flux
-ax9 = fig.add_subplot(3,3,9)
+ax9 = fig.add_subplot(4,3,9)
 ax9.text(s='Sensible heat flux bias, W/m2', x=0, y=1.02, ha='left', va='bottom', \
         fontsize=fontsize, transform=ax9.transAxes)
 ax9.plot(x_axis, HFX_WRF_SGP.values - sensible_ARM_SGP[0:122].values , 'k-', label='SH, WRF-ARMBE2D')
@@ -328,11 +355,49 @@ ax9.xaxis.set_major_locator(months)
 ax9.xaxis.set_major_formatter(dates_fmt)
 ax9.axhline(linewidth=1.5, color='k')
 
+### Add WRF precip - Stage IV precip
+ax10 = fig.add_subplot(4,3,10)
+ax10.text(s='Precip rate bias, mm/day', x=0, y=1.02, ha='left', va='bottom', \
+        fontsize=fontsize, transform=ax10.transAxes)
+ax10.plot(x_axis, RAIN_WRF_SGP.values - pr_st4_ARM_SGP[0:122].values, 'k-', label='precip rate, WRF-StageIV_pr')
+#ax7.plot(x_axis, pr_st4_ARM_SGP[0:122].values, 'k-', label='precip rate, ARMBE2D')
+ax10.grid()
+ax10.legend(loc='upper left',fontsize=fontsize)
+## format the ticks
+ax10.xaxis.set_major_locator(months)
+ax10.xaxis.set_major_formatter(dates_fmt)
+ax10.axhline(linewidth=1.5, color='k')
+
+### Add latent heat flux
+ax11 = fig.add_subplot(4,3,11)
+ax11.text(s='Latent heat flux bias, W/m2', x=0, y=1.02, ha='left', va='bottom', \
+        fontsize=fontsize, transform=ax11.transAxes)
+ax11.plot(x_axis, LH_WRF_SGP_W_m2.values - E_a_ARM_SGP[0:122].values , 'k-', label='LH, WRF-GLEAM_E_va')
+#ax8.plot(x_axis, E_a_ARM_SGP[0:122].values, 'k-', label='LH, GLEAM E_va')
+ax11.grid()
+ax11.legend(loc='upper left',fontsize=fontsize)
+## format the ticks
+ax11.xaxis.set_major_locator(months)
+ax11.xaxis.set_major_formatter(dates_fmt)
+ax11.axhline(linewidth=1.5, color='k')
+
+### Add latent heat flux
+ax12 = fig.add_subplot(4,3,12)
+ax12.text(s='Latent heat flux bias, W/m2', x=0, y=1.02, ha='left', va='bottom', \
+        fontsize=fontsize, transform=ax12.transAxes)
+ax12.plot(x_axis, LH_WRF_SGP_W_m2.values - E_b_ARM_SGP[0:122].values , 'k-', label='LH, WRF-GLEAM_E_vb')
+#ax8.plot(x_axis, E_b_ARM_SGP[0:122].values, 'k-', label='LH, GLEAM E_vb')
+ax12.grid()
+ax12.legend(loc='upper left',fontsize=fontsize)
+## format the ticks
+ax12.xaxis.set_major_locator(months)
+ax12.xaxis.set_major_formatter(dates_fmt)
+ax12.axhline(linewidth=1.5, color='k')
 
 
 ###
 #fig.savefig("../Figure/Figure15.WRF_vs_ARM_SGP.png",dpi=600, bbox_inches='tight')
-fig.savefig("../Figure/Figure15.WRF_vs_ARM_SGP.png",dpi=600)
+fig.savefig("../Figure/Figure15.WRF_vs_ARM_SGP.StageIV_pr.GLEAM.added.png",dpi=600)
 plt.show()
 
 
