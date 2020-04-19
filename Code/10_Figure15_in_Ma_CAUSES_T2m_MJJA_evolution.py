@@ -15,7 +15,8 @@ label_string2 = "_Thom"
 ds_WRF = xr.open_dataset('/home/qin5/Data/WRF.postprocessing.extract.hourly.nc')
 ds_SM_WRF = xr.open_dataset('/home/qin5/Data/WRF.postprocessing.extract.hourly.SMOIS.nc')
 
-ds_WRF_Thom = xr.open_dataset('/home/qin5/Data/WRF.postprocessing.extract.hourly.Thom.nc')
+#ds_WRF_Thom = xr.open_dataset('/home/qin5/Data/WRF.postprocessing.extract.hourly.Thom.056.nc')
+ds_WRF_Thom = xr.open_dataset('/home/qin5/Data/WRF.postprocessing.extract.hourly.Thom.05678.nc')
 
 ds_ARMBE2D_05 = xr.open_dataset('/home/qin5/Data/ARMBE2DGRID/sgparmbe2dgridX1.c1.20110501.000000.nc')
 ds_ARMBE2D_06 = xr.open_dataset('/home/qin5/Data/ARMBE2DGRID/sgparmbe2dgridX1.c1.20110601.000000.nc')
@@ -111,9 +112,10 @@ RAIN_WRF_Thom_SGP.attrs['units'] = "mm/day"
 #print(RAIN_WRF_Thom_SGP)
 
 #### accumulative rain
-RAIN_WRF_Thom_ACC = np.asarray([RAIN_WRF_Thom_SGP[0:i].values.sum() for i in np.arange(0,9,1)])
+#RAIN_WRF_Thom_ACC = np.asarray([RAIN_WRF_Thom_SGP[0:i].values.sum() for i in np.arange(0,12,1)])
 #--------uncomment
-#RAIN_WRF_Thom_ACC = np.asarray([RAIN_WRF_Thom_SGP[0:i].values.sum() for i in np.arange(0,122,1)])
+## Note the Zhe WRF simulation WRF_Thompson only goes to 08-27, and the first 9 hours of 08-28.
+RAIN_WRF_Thom_ACC = np.asarray([RAIN_WRF_Thom_SGP[0:i].values.sum() for i in np.arange(0,120,1)])
 #-----------
 RAIN_WRF_Thom_ACC = xr.DataArray(RAIN_WRF_Thom_ACC, dims=('time'), coords = {'time':RAIN_WRF_Thom_SGP.coords['time'] })
 RAIN_WRF_Thom_ACC.attrs['units'] = "mm"
@@ -129,10 +131,9 @@ LH_WRF_Thom_SGP.attrs['units'] = "mm/day"
 LH_WRF_Thom_SGP.attrs['long_name'] = "ET converted from latent heat flux, mm/day"
 
 #### accumulative evaporation
-
-evap_WRF_Thom_ACC = np.asarray([LH_WRF_Thom_SGP[0:i].values.sum() for i in np.arange(0,9,1)])
+#evap_WRF_Thom_ACC = np.asarray([LH_WRF_Thom_SGP[0:i].values.sum() for i in np.arange(0,61,1)])
 #------uncomment
-#evap_WRF_Thom_ACC = np.asarray([LH_WRF_Thom_SGP[0:i].values.sum() for i in np.arange(0,122,1)])
+evap_WRF_Thom_ACC = np.asarray([LH_WRF_Thom_SGP[0:i].values.sum() for i in np.arange(0,120,1)])
 #-------
 
 evap_WRF_Thom_ACC = xr.DataArray(evap_WRF_Thom_ACC, dims=('time'), coords = {'time':LH_WRF_Thom_SGP.coords['time'] })
@@ -169,7 +170,6 @@ HFX_WRF_Thom_SGP.attrs['units'] = "unitless"
 T2_regrid_Thom = ds_WRF_Thom['T2_regrid']
 T2_WRF_Thom_daily = T2_regrid_Thom.resample(time='1D').mean(dim='time')
 T2_WRF_Thom_SGP = T2_WRF_Thom_daily.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
-
 
 ### ---------------------------
 ### ARM SGP obs: ARMBE2DGRID from Qi Tang
@@ -314,10 +314,7 @@ ax1 = fig.add_subplot(4,3,1)
 ax1.text(s='Accumulated precip, mm', x=0, y=1.02, ha='left', va='bottom', \
         fontsize=fontsize, transform=ax1.transAxes)
 ax1.plot(x_axis, RAIN_WRF_ACC.values, 'b-', label='precip, WRF'+label_string1)
-##-----uncomment
-ax1.plot(x_axis[0:9], RAIN_WRF_Thom_ACC.values, 'g-', label='precip, WRF'+label_string2)
-#ax1.plot(x_axis, 10*RAIN_WRF_Thom_ACC.values, 'g-', label='precip, WRF'+label_string2)
-#----------
+ax1.plot(x_axis[0:120], RAIN_WRF_Thom_ACC.values, 'g-', label='precip, WRF'+label_string2)
 ## Note that WRF simulation does not have 08-31 data, only 122 values;
 ## Therefore, also omit 08-31 data in ARMBE when plotting.
 ax1.plot(x_axis, precip_ARM_ACC[0:122].values, 'k-', label='precip, ARMBE2D')
@@ -332,9 +329,7 @@ ax2 = fig.add_subplot(4,3,2)
 ax2.text(s='Accumulated ET (converted from LatentHeatFlux), mm', x=0, y=1.02, ha='left', va='bottom', \
         fontsize=fontsize, transform=ax2.transAxes)
 ax2.plot(x_axis, evap_WRF_ACC.values, 'b-', label='ET, WRF'+label_string1)
-#-----uncomment
-ax2.plot(x_axis[0:9], evap_WRF_Thom_ACC.values, 'g-', label='ET, WRF'+label_string2)
-#ax2.plot(x_axis, evap_WRF_Thom_ACC.values, 'g-', label='ET, WRF'+label_string2)
+ax2.plot(x_axis[0:120], evap_WRF_Thom_ACC.values, 'g-', label='ET, WRF'+label_string2)
 #-------
 ax2.plot(x_axis, evap_ARM_ACC[0:122].values, 'k-', label='ET, ARMBE2D')
 ax2.grid()
@@ -348,9 +343,7 @@ ax3 = fig.add_subplot(4,3,3)
 ax3.text(s='P-E (Accumulated), mm', x=0, y=1.02, ha='left', va='bottom', \
         fontsize=fontsize, transform=ax3.transAxes)
 ax3.plot(x_axis, (RAIN_WRF_ACC.values - evap_WRF_ACC.values), 'b-', label='P-E, WRF'+label_string1)
-#-----uncomment
-ax3.plot(x_axis[0:9], (RAIN_WRF_Thom_ACC.values - evap_WRF_Thom_ACC.values), 'g-', label='P-E, WRF'+label_string2)
-#ax3.plot(x_axis, (RAIN_WRF_Thom_ACC.values - evap_WRF_Thom_ACC.values), 'g-', label='P-E, WRF'+label_string2)
+ax3.plot(x_axis[0:120], (RAIN_WRF_Thom_ACC.values - evap_WRF_Thom_ACC.values), 'g-', label='P-E, WRF'+label_string2)
 #--------
 ax3.plot(x_axis, (precip_ARM_ACC[0:122].values - evap_ARM_ACC[0:122].values), 'k-', label='P-E, ARMBE2D')
 ax3.grid()
@@ -365,12 +358,8 @@ ax4.text(s='soil moisture, m3/m3', x=0, y=1.02, ha='left', va='bottom', \
         fontsize=fontsize, transform=ax4.transAxes)
 ax4.plot(x_axis, SMOIS_WRF_SGP.values, 'b-', label='5cm,WRF'+label_string1)
 ax4.plot(x_axis, SMOIS25_WRF_SGP.values, 'b+', label='25cm,WRF'+label_string1)
-### uncomment
-ax4.plot(x_axis[0:9], SMOIS_WRF_Thom_SGP.values, 'g-', label='5cm,WRF'+label_string2)
-ax4.plot(x_axis[0:9], SMOIS25_WRF_Thom_SGP.values, 'g+', label='25cm,WRF'+label_string2)
-#ax4.plot(x_axis, SMOIS_WRF_Thom_SGP.values, 'g-', label='5cm,WRF'+label_string2)
-#ax4.plot(x_axis, SMOIS25_WRF_Thom_SGP.values, 'g+', label='25cm,WRF'+label_string2)
-## -------------
+ax4.plot(x_axis[0:120], SMOIS_WRF_Thom_SGP.values, 'g-', label='5cm,WRF'+label_string2)
+ax4.plot(x_axis[0:120], SMOIS25_WRF_Thom_SGP.values, 'g+', label='25cm,WRF'+label_string2)
 ax4.plot(x_axis, SM_ARM_SGP[0:122].values, 'k-', label='SM_swats,5cm')
 ax4.plot(x_axis, SM25_ARM_SGP[0:122].values, 'k+', label='SM_swats,25cm')
 ax4.plot(x_axis, SM_ARM_SGP_ebbr[0:122].values, 'k--', label='SM_ebbr,2.5cm')
@@ -382,15 +371,12 @@ ax4.legend(loc='lower left',fontsize=fontsize)
 ax4.xaxis.set_major_locator(months)
 ax4.xaxis.set_major_formatter(dates_fmt)
 
-### subplot(3,3,4)
+### subplot(3,3,5)
 ax5 = fig.add_subplot(4,3,5)
 ax5.text(s='EF bias, WRF-obs, (EF=LH/(SH+LH)), unitless', x=0, y=1.02, ha='left', va='bottom', \
         fontsize=fontsize, transform=ax5.transAxes)
 ax5.plot(x_axis, (EF_WRF_SGP.values - EF_ARM_SGP[0:122].values) , 'b-', label='WRF'+label_string1)
-#--uncomment
-ax5.plot(x_axis[0:9], (EF_WRF_Thom_SGP.values - EF_ARM_SGP[0:9].values) , 'g-', label='WRF'+label_string2)
-#ax5.plot(x_axis, (EF_WRF_Thom_SGP.values - EF_ARM_SGP[0:122].values) , 'g-', label='WRF'+label_string2)
-#---
+ax5.plot(x_axis[0:120], (EF_WRF_Thom_SGP.values - EF_ARM_SGP[0:120].values) , 'g-', label='WRF'+label_string2)
 #ax5.plot(x_axis, EF_WRF_SGP.values , 'b-', label='EF WRF')
 #ax5.plot(x_axis, EF_ARM_SGP[0:122].values, 'k-', label='EF obs')
 ax5.grid()
@@ -405,10 +391,7 @@ ax6 = fig.add_subplot(4,3,6)
 ax6.text(s='T2 bias, WRF-obs, K', x=0, y=1.02, ha='left', va='bottom', \
         fontsize=fontsize, transform=ax6.transAxes)
 ax6.plot(x_axis, (T2_WRF_SGP.values - temp_ARM_SGP[0:122].values) , 'b-', label='WRF'+label_string1)
-#---uncomment
-ax6.plot(x_axis[0:9], (T2_WRF_Thom_SGP[0:9].values - temp_ARM_SGP[0:9].values) , 'g-', label='WRF'+label_string2)
-#ax6.plot(x_axis, (T2_WRF_Thom_SGP.values - temp_ARM_SGP[0:122].values) , 'g-', label='WRF'+label_string2)
-#------
+ax6.plot(x_axis[0:120], (T2_WRF_Thom_SGP.values - temp_ARM_SGP[0:120].values) , 'g-', label='WRF'+label_string2)
 ax6.grid()
 ax6.legend(loc='lower left',fontsize=fontsize)
 # format the ticks
@@ -421,10 +404,7 @@ ax7 = fig.add_subplot(4,3,7)
 ax7.text(s='Precip rate bias, mm/day', x=0, y=1.02, ha='left', va='bottom', \
         fontsize=fontsize, transform=ax7.transAxes)
 ax7.plot(x_axis, RAIN_WRF_SGP.values - precip_ARM_SGP[0:122].values, 'b-', label='WRF'+label_string1+'-ARMBE2D')
-#-----uncomment
-ax7.plot(x_axis[0:9], RAIN_WRF_Thom_SGP.values - precip_ARM_SGP[0:9].values, 'g-', label='WRF'+label_string2+'-ARMBE2D')
-#ax7.plot(x_axis, RAIN_WRF_Thom_SGP.values - precip_ARM_SGP[0:122].values, 'g-', label='WRF'+label_string2+'-ARMBE2D')
-#-------
+ax7.plot(x_axis[0:120], RAIN_WRF_Thom_SGP.values - precip_ARM_SGP[0:120].values, 'g-', label='WRF'+label_string2+'-ARMBE2D')
 #ax7.plot(x_axis, precip_ARM_SGP[0:122].values, 'k-', label='precip rate, ARMBE2D')
 ax7.grid()
 ax7.legend(loc='upper left',fontsize=fontsize)
@@ -438,10 +418,7 @@ ax8 = fig.add_subplot(4,3,8)
 ax8.text(s='Latent heat flux bias, W/m2', x=0, y=1.02, ha='left', va='bottom', \
         fontsize=fontsize, transform=ax8.transAxes)
 ax8.plot(x_axis, LH_WRF_SGP_W_m2.values - latent_ARM_SGP_W_m2[0:122].values , 'b-', label='WRF'+label_string1+'-ARMBE2D')
-#----uncomment
-ax8.plot(x_axis[0:9], LH_WRF_Thom_SGP_W_m2.values - latent_ARM_SGP_W_m2[0:9].values , 'g-', label='WRF'+label_string2+'-ARMBE2D')
-#ax8.plot(x_axis, LH_WRF_Thom_SGP_W_m2.values - latent_ARM_SGP_W_m2[0:122].values , 'g-', label='WRF'+label_string2+'-ARMBE2D')
-#--------
+ax8.plot(x_axis[0:120], LH_WRF_Thom_SGP_W_m2.values - latent_ARM_SGP_W_m2[0:120].values , 'g-', label='WRF'+label_string2+'-ARMBE2D')
 #ax8.plot(x_axis, latent_ARM_SGP_W_m2[0:122].values, 'k-', label='LH, ARMBE2D')
 ax8.grid()
 ax8.legend(loc='lower left',fontsize=fontsize)
@@ -455,10 +432,7 @@ ax9 = fig.add_subplot(4,3,9)
 ax9.text(s='Sensible heat flux bias, W/m2', x=0, y=1.02, ha='left', va='bottom', \
         fontsize=fontsize, transform=ax9.transAxes)
 ax9.plot(x_axis, HFX_WRF_SGP.values - sensible_ARM_SGP[0:122].values , 'b-', label='WRF'+label_string1+'-ARMBE2D')
-#----uncomment
-ax9.plot(x_axis[0:9], HFX_WRF_Thom_SGP.values - sensible_ARM_SGP[0:9].values , 'g-', label='WRF'+label_string2+'-ARMBE2D')
-#ax9.plot(x_axis, HFX_WRF_Thom_SGP.values - sensible_ARM_SGP[0:122].values , 'g-', label='WRF'+label_string2+'-ARMBE2D')
-#-------
+ax9.plot(x_axis[0:120], HFX_WRF_Thom_SGP.values - sensible_ARM_SGP[0:120].values , 'g-', label='WRF'+label_string2+'-ARMBE2D')
 #ax9.plot(x_axis, sensible_ARM_SGP[0:122].values, 'k-', label='SH, ARMBE2D')
 ax9.grid()
 ax9.legend(loc='upper right',fontsize=fontsize)
@@ -472,9 +446,7 @@ ax10 = fig.add_subplot(4,3,10)
 ax10.text(s='Precip rate bias, mm/day', x=0, y=1.02, ha='left', va='bottom', \
         fontsize=fontsize, transform=ax10.transAxes)
 ax10.plot(x_axis, RAIN_WRF_SGP.values - pr_st4_ARM_SGP[0:122].values, 'b-', label='WRF'+label_string1+'-StageIV_pr')
-#------ comment
-ax10.plot(x_axis[0:9], RAIN_WRF_Thom_SGP.values - pr_st4_ARM_SGP[0:9].values, 'g-', label='WRF'+label_string2+'-StageIV_pr')
-#ax10.plot(x_axis, RAIN_WRF_Thom_SGP.values - pr_st4_ARM_SGP[0:122].values, 'g-', label='WRF'+label_string2+'-StageIV_pr')
+ax10.plot(x_axis[0:120], RAIN_WRF_Thom_SGP.values - pr_st4_ARM_SGP[0:120].values, 'g-', label='WRF'+label_string2+'-StageIV_pr')
 #--------
 #ax7.plot(x_axis, pr_st4_ARM_SGP[0:122].values, 'k-', label='precip rate, ARMBE2D')
 ax10.grid()
@@ -489,10 +461,7 @@ ax11 = fig.add_subplot(4,3,11)
 ax11.text(s='Latent heat flux bias, W/m2', x=0, y=1.02, ha='left', va='bottom', \
         fontsize=fontsize, transform=ax11.transAxes)
 ax11.plot(x_axis, LH_WRF_SGP_W_m2.values - E_a_ARM_SGP[0:122].values , 'b-', label='WRF'+label_string1+'-GLEAM_E_va')
-#------uncomment
-ax11.plot(x_axis[0:9], LH_WRF_Thom_SGP_W_m2.values - E_a_ARM_SGP[0:9].values , 'g-', label='WRF'+label_string2+'-GLEAM_E_va')
-#ax11.plot(x_axis, LH_WRF_Thom_SGP_W_m2.values - E_a_ARM_SGP[0:122].values , 'g-', label='WRF'+label_string2+'-GLEAM_E_va')
-#--------
+ax11.plot(x_axis[0:120], LH_WRF_Thom_SGP_W_m2.values - E_a_ARM_SGP[0:120].values , 'g-', label='WRF'+label_string2+'-GLEAM_E_va')
 #ax8.plot(x_axis, E_a_ARM_SGP[0:122].values, 'k-', label='LH, GLEAM E_va')
 ax11.grid()
 ax11.legend(loc='lower left',fontsize=fontsize)
@@ -506,10 +475,7 @@ ax12 = fig.add_subplot(4,3,12)
 ax12.text(s='Latent heat flux bias, W/m2', x=0, y=1.02, ha='left', va='bottom', \
         fontsize=fontsize, transform=ax12.transAxes)
 ax12.plot(x_axis, LH_WRF_SGP_W_m2.values - E_b_ARM_SGP[0:122].values , 'b-', label='WRF'+label_string1+'-GLEAM_E_vb')
-#--------uncomment
-ax12.plot(x_axis[0:9], LH_WRF_Thom_SGP_W_m2.values - E_b_ARM_SGP[0:9].values , 'g-', label='WRF'+label_string2+'-GLEAM_E_vb')
-#ax12.plot(x_axis, LH_WRF_Thom_SGP_W_m2.values - E_b_ARM_SGP[0:122].values , 'g-', label='WRF'+label_string2+'-GLEAM_E_vb')
-#-----------
+ax12.plot(x_axis[0:120], LH_WRF_Thom_SGP_W_m2.values - E_b_ARM_SGP[0:120].values , 'g-', label='WRF'+label_string2+'-GLEAM_E_vb')
 #ax8.plot(x_axis, E_b_ARM_SGP[0:122].values, 'k-', label='LH, GLEAM E_vb')
 ax12.grid()
 ax12.legend(loc='lower left',fontsize=fontsize)
