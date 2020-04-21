@@ -127,6 +127,10 @@ printVarSummary(VAR_bias_May)
   res@mpMaxLonF                   = 292.0
   res@mpMinLonF                   = 233.0
 
+res@mpOutlineBoundarySets     = "GeophysicalAndUSStates"; turn on states
+  res@mpDataBaseVersion         = "MediumRes"             ; select database
+  res@mpDataSetName             = "Earth..2"
+
   res@gsnCenterString = "WRF_Morri, JJA"
   plot(0) = gsn_csm_contour_map(wks,VAR_WRF_JJA,res) 
 

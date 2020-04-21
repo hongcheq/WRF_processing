@@ -11,7 +11,7 @@ import pandas
 #label_string = "_Morr"
 label_string = "_Thom"
 
-ds_WRF = xr.open_dataset('/home/qin5/Data/WRF.postprocessing.extract.hourly.Thom.nc')
+ds_WRF = xr.open_dataset('/home/qin5/Data/WRF.postprocessing.extract.hourly.Thom.05678.nc')
 
 ds_pr_stage4 = xr.open_dataset('/home/qin5/Data/Precip_StageIV/Precip_Stage_IV.2011045678.postprocessing.extract.hourly.nc')
 
@@ -82,7 +82,7 @@ fontsize = 7
 pos_adjust1 = 0.04
 
 ax1 = fig.add_subplot(3,1,1)
-ax1.text(s='Precip bias, WRF - StageIV_precip', x=0, y=1.02, ha='left', va='bottom', \
+ax1.text(s='Precip bias, WRF_Thom - StageIV_precip', x=0, y=1.02, ha='left', va='bottom', \
         fontsize=fontsize, transform=ax1.transAxes)
 #ax1.plot(x_axis, bias_May.values, 'r-', label='precip,May')
 ax1.plot(x_axis, bias_MJJA.values, 'r--', label='precip,MJJA')

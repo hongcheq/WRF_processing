@@ -96,7 +96,7 @@ VAR_bias_Aug = VAR_WRF_Aug - VAR_obs_Aug
 printVarSummary(VAR_bias_May)
 
 ;--------- panel plot ---------
-  wks = gsn_open_wks("png","../Figure/"+VAR_WRF_str+label_string)              ; send graphics to PNG file
+  wks = gsn_open_wks("x11","../Figure/"+VAR_WRF_str+label_string)              ; send graphics to PNG file
 
   plot = new(12,graphic)                          ; create a plot array
   

@@ -8,7 +8,7 @@ begin
 ;label_string = "_Morrison"
 label_string = "_Thompson"
 
-WRF_file = "/home/qin5/Data/WRF.postprocessing.extract.Thom.nc"
+WRF_file = "/home/qin5/Data/WRF.postprocessing.extract.hourly.Thom.05678.nc"
 
 VAR_WRF_str = (/"T2_regrid"/)
 VAR_obs_str = (/"t2m"/)
@@ -62,6 +62,7 @@ printVarSummary(VAR_WRF&lat)
 
 VAR_WRF_month = calculate_monthly_values(VAR_WRF, "avg", 0, False)
 VAR_obs_month = calculate_monthly_values(VAR_obs, "avg", 0, False)
+printVarSummary(VAR_WRF_month)
 
 VAR_obs_test = dim_avg_n_Wrap(VAR_obs,0)
 
@@ -76,6 +77,7 @@ VAR_WRF_Jun = VAR_WRF_month(1,:,:)
 VAR_WRF_Jul = VAR_WRF_month(2,:,:)
 VAR_WRF_Aug = VAR_WRF_month(3,:,:)
 printVarSummary(VAR_WRF_May)
+;--------
 
 VAR_obs_May = VAR_obs_month(1,:,:)
 VAR_obs_Jun = VAR_obs_month(2,:,:)
@@ -94,7 +96,6 @@ VAR_bias_Jul = VAR_WRF_Jul - VAR_obs_Jul
 
 VAR_bias_Aug = VAR_obs_Aug ; metadata
 VAR_bias_Aug = VAR_WRF_Aug - VAR_obs_Aug
-
 printVarSummary(VAR_bias_May)
 
 ;--------- panel plot ---------
@@ -132,16 +133,15 @@ printVarSummary(VAR_bias_May)
   plot(2) = gsn_csm_contour_map(wks,VAR_WRF_Jul,res) 
   res@gsnCenterString = "WRF, Aug"
   plot(3) = gsn_csm_contour_map(wks,VAR_WRF_Aug,res) 
-
   res@gsnCenterString = "NOAA, May"
   plot(4) = gsn_csm_contour_map(wks,VAR_obs_May,res) 
   res@gsnCenterString = "NOAA, Jun"
   plot(5) = gsn_csm_contour_map(wks,VAR_obs_Jun,res) 
+
   res@gsnCenterString = "NOAA, Jul"
   plot(6) = gsn_csm_contour_map(wks,VAR_obs_Jul,res) 
   res@gsnCenterString = "NOAA, Aug"
   plot(7) = gsn_csm_contour_map(wks,VAR_obs_Aug,res) 
-
   res@cnLevelSelectionMode =  "ManualLevels"   
   res@cnMinLevelValF       = -5.
   res@cnMaxLevelValF       =  5.

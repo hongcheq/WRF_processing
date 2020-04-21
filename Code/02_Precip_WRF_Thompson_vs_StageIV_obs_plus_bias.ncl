@@ -13,13 +13,15 @@ VAR_WRF_str = (/"RAIN_tot_regrid"/)
 VAR_obs_str = (/"precip_st4_regrid"/)
 
 ;WRF_file = "WRF.postprocessing.extract.nc"
-WRF_file = "/home/qin5/Data/WRF.postprocessing.extract.Thom.nc"
+WRF_file = "/home/qin5/Data/WRF.postprocessing.extract.hourly.Thom.05678.nc"
 obs_file = "/home/qin5/Data/Precip_StageIV/Precip_Stage_IV.2011045678.postprocessing.extract.hourly.nc"
 
 WRF_f = addfile(WRF_file,"r")
 obs_f = addfile(obs_file,"r")
 
 VAR_WRF = WRF_f->$VAR_WRF_str$
+VAR_WRF = VAR_WRF * 24.0
+VAR_WRF@units = "mm/day"
 
 VAR_obs = obs_f->$VAR_obs_str$
 ;; NaN values
@@ -37,7 +39,7 @@ VAR_obs@units = "mm/day"
 
 printVarSummary(VAR_WRF)
 printVarSummary(VAR_obs)
-printVarSummary(VAR_WRF&Time)
+;printVarSummary(VAR_WRF&Time)
 printVarSummary(VAR_obs&time)
 
 print(Calendar(VAR_obs&time(0:3065)))
@@ -57,8 +59,10 @@ printVarSummary(VAR_obs_month)
 
 VAR_WRF_May = VAR_WRF_month(0,:,:)
 VAR_WRF_Jun = VAR_WRF_month(1,:,:)
+
 VAR_WRF_Jul = VAR_WRF_month(2,:,:)
 VAR_WRF_Aug = VAR_WRF_month(3,:,:)
+
 ;printVarSummary(VAR_WRF_May&lat)
 ;printVarSummary(VAR_WRF_May&lon)
 
@@ -71,10 +75,10 @@ VAR_obs_May&lat@units = VAR_WRF_May&lat@units
 VAR_obs_May&lon@units = VAR_WRF_May&lon@units
 VAR_obs_Jun&lat@units = VAR_WRF_Jun&lat@units
 VAR_obs_Jun&lon@units = VAR_WRF_Jun&lon@units
-VAR_obs_Jul&lat@units = VAR_WRF_Jul&lat@units
-VAR_obs_Jul&lon@units = VAR_WRF_Jul&lon@units
-VAR_obs_Aug&lat@units = VAR_WRF_Aug&lat@units
-VAR_obs_Aug&lon@units = VAR_WRF_Aug&lon@units
+VAR_obs_Jul&lat@units = VAR_WRF_May&lat@units
+VAR_obs_Jul&lon@units = VAR_WRF_May&lon@units
+VAR_obs_Aug&lat@units = VAR_WRF_May&lat@units
+VAR_obs_Aug&lon@units = VAR_WRF_May&lon@units
 printVarSummary(VAR_obs_May&lon)
 
 ;;Note that Stage IV precip has fewer spatial coverage on 1x1 grid

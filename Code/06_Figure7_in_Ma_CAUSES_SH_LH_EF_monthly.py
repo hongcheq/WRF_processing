@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import pandas
 
 ds_WRF = xr.open_dataset('/home/qin5/Data/WRF.postprocessing.extract.hourly.nc')
-ds_WRF_Thom = xr.open_dataset('/home/qin5/Data/WRF.postprocessing.extract.hourly.Thom.nc')
+ds_WRF_Thom = xr.open_dataset('/home/qin5/Data/WRF.postprocessing.extract.hourly.Thom.05678.nc')
 
 ds_FLUXNET = xr.open_dataset('/home/qin5/Data/CAUSES_obs/LE_H_FLUXNET_2011_conus_1dgrid.nc',\
         decode_times=False)
@@ -254,7 +254,7 @@ EF_ARM_MJJA = L_ARM_MJJA / (L_ARM_MJJA + SH_ARM_MJJA)
 x_axis = ['May','Jun','Jul','Aug','JJA','MJJA']
 
 fig = plt.figure(figsize=(7,9))
-fontsize = 6
+fontsize = 7
 pos_adjust1 = 0.04
 
 ax1 = fig.add_subplot(3,1,1)
@@ -263,14 +263,14 @@ ax1.text(s='Latent Heat Flux, W/m2', x=0, y=1.02, ha='left', va='bottom', \
 ax1.scatter(x_axis, [L_WRF_May, L_WRF_Jun, L_WRF_Jul, L_WRF_Aug, L_WRF_JJA, L_WRF_MJJA], c='b',marker='s', label='WRF_Morr')
 ax1.scatter(x_axis, [L_WRF_Thom_May, L_WRF_Thom_Jun, L_WRF_Thom_Jul, L_WRF_Thom_Aug, L_WRF_Thom_JJA, L_WRF_Thom_MJJA], c='g',marker='s', label='WRF_Thom')
 ax1.scatter(x_axis, [L_ARM_May, L_ARM_Jun, L_ARM_Jul, L_ARM_Aug, L_ARM_JJA, L_ARM_MJJA], c='r', marker='d', label='ARM obs')
-ax1.scatter(x_axis, [L_FLUX_May, L_FLUX_Jun, L_FLUX_Jul, L_FLUX_Aug, L_FLUX_JJA, L_FLUX_MJJA], c='b', marker='d', label='FLUXNET obs')
+ax1.scatter(x_axis, [L_FLUX_May, L_FLUX_Jun, L_FLUX_Jul, L_FLUX_Aug, L_FLUX_JJA, L_FLUX_MJJA], c='k', marker='d', label='FLUXNET obs')
 ax1.scatter(x_axis, [Ea_GLEAM_May, Ea_GLEAM_Jun, Ea_GLEAM_Jul, Ea_GLEAM_Aug, Ea_GLEAM_JJA, Ea_GLEAM_MJJA], c='y', marker='d', label='GLEAM E_va')
-ax1.scatter(x_axis, [Eb_GLEAM_May, Eb_GLEAM_Jun, Eb_GLEAM_Jul, Eb_GLEAM_Aug, Eb_GLEAM_JJA, Eb_GLEAM_MJJA], c='g', marker='d', label='GLEAM E_vb')
+ax1.scatter(x_axis, [Eb_GLEAM_May, Eb_GLEAM_Jun, Eb_GLEAM_Jul, Eb_GLEAM_Aug, Eb_GLEAM_JJA, Eb_GLEAM_MJJA], c='c', marker='d', label='GLEAM E_vb')
 ax1.set_yticks(np.arange(40.0,170,20))
 #ax1.set_xticks(np.arange(0.0,24.1,3.0))
 ax1.set(xlabel='month category', ylabel='Latent heat flux, W/m2', title='WRF vs ARM SGP')
 ax1.grid()
-ax1.legend(loc='upper center')
+ax1.legend(loc='upper center',prop={'size': fontsize})
 
 ax2 = fig.add_subplot(3,1,2)
 ax2.text(s='Sensible Heat Flux, W/m2', x=0, y=1.02, ha='left', va='bottom', \
@@ -278,10 +278,10 @@ ax2.text(s='Sensible Heat Flux, W/m2', x=0, y=1.02, ha='left', va='bottom', \
 ax2.scatter(x_axis, [SH_WRF_May, SH_WRF_Jun, SH_WRF_Jul, SH_WRF_Aug, SH_WRF_JJA, SH_WRF_MJJA], c='b',marker='s', label='WRF_Morr')
 ax2.scatter(x_axis, [SH_WRF_Thom_May, SH_WRF_Thom_Jun, SH_WRF_Thom_Jul, SH_WRF_Thom_Aug, SH_WRF_Thom_JJA, SH_WRF_Thom_MJJA], c='g',marker='s', label='WRF_Thom')
 ax2.scatter(x_axis, [SH_ARM_May, SH_ARM_Jun, SH_ARM_Jul, SH_ARM_Aug, SH_ARM_JJA, SH_ARM_MJJA], c='r', marker='d', label='ARM obs')
-ax2.scatter(x_axis, [SH_FLUX_May, SH_FLUX_Jun, SH_FLUX_Jul, SH_FLUX_Aug, SH_FLUX_JJA, SH_FLUX_MJJA], c='b', marker='d', label='FLUXNET obs')
+ax2.scatter(x_axis, [SH_FLUX_May, SH_FLUX_Jun, SH_FLUX_Jul, SH_FLUX_Aug, SH_FLUX_JJA, SH_FLUX_MJJA], c='k', marker='d', label='FLUXNET obs')
 ax2.set(xlabel='month category', ylabel='Sensible heat flux, W/m2')
 ax2.grid()
-ax2.legend(loc='upper left')
+ax2.legend(loc='upper left',prop={'size': fontsize})
 
 ax3 = fig.add_subplot(3,1,3)
 ax3.text(s='Evaporative Fraction, unitless', x=0, y=1.02, ha='left', va='bottom', \
@@ -289,10 +289,10 @@ ax3.text(s='Evaporative Fraction, unitless', x=0, y=1.02, ha='left', va='bottom'
 ax3.scatter(x_axis, [EF_WRF_May, EF_WRF_Jun, EF_WRF_Jul, EF_WRF_Aug, EF_WRF_JJA, EF_WRF_MJJA], c='b',marker='s', label='WRF_Morr')
 ax3.scatter(x_axis, [EF_WRF_Thom_May, EF_WRF_Thom_Jun, EF_WRF_Thom_Jul, EF_WRF_Thom_Aug, EF_WRF_Thom_JJA, EF_WRF_Thom_MJJA], c='g',marker='s', label='WRF_Thom')
 ax3.scatter(x_axis, [EF_ARM_May, EF_ARM_Jun, EF_ARM_Jul, EF_ARM_Aug, EF_ARM_JJA, EF_ARM_MJJA], c='r', marker='d', label='ARM obs')
-ax3.scatter(x_axis, [EF_FLUX_May, EF_FLUX_Jun, EF_FLUX_Jul, EF_FLUX_Aug, EF_FLUX_JJA, EF_FLUX_MJJA], c='b', marker='d', label='FLUXNET obs')
+ax3.scatter(x_axis, [EF_FLUX_May, EF_FLUX_Jun, EF_FLUX_Jul, EF_FLUX_Aug, EF_FLUX_JJA, EF_FLUX_MJJA], c='k', marker='d', label='FLUXNET obs')
 ax3.set(xlabel='month category', ylabel='Evaporative Fraction, unitless')
 ax3.grid()
-ax3.legend(loc='lower left')
+ax3.legend(loc='lower left',prop={'size':fontsize})
 
 fig.savefig("../Figure/Figure7.SH.LH.EF.WRF_Morri_Thom_vs_ARM_SGP_FLUXNET_GLEAM.png",dpi=600)
 plt.show()

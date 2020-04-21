@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import pandas
 
 ds_WRF = xr.open_dataset('/home/qin5/Data/WRF.postprocessing.extract.hourly.nc')
-ds_WRF_Thom = xr.open_dataset('/home/qin5/Data/WRF.postprocessing.extract.hourly.Thom.nc')
+ds_WRF_Thom = xr.open_dataset('/home/qin5/Data/WRF.postprocessing.extract.hourly.Thom.05678.nc')
 
 ds_NOAA = xr.open_dataset('/home/qin5/Data/CAUSES_obs/noaa_conus_T2M_temperature_1p0deg_hourly_2011_MAMJJA.nc')
 
@@ -63,7 +63,6 @@ WRF_Thom_Jul = T2_WRF_Thom_Jul.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon
 WRF_Thom_Aug = T2_WRF_Thom_Aug.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
 WRF_Thom_JJA = T2_WRF_Thom_JJA.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
 WRF_Thom_MJJA = T2_WRF_Thom_MJJA.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
-
 
 ### ------ NOAA obs T2m -----
 t2m = ds_NOAA['t2m']
@@ -132,6 +131,8 @@ ax1.text(s='T2m, K', x=0, y=1.02, ha='left', va='bottom', \
         fontsize=fontsize, transform=ax1.transAxes)
 ax1.scatter(x_axis, [WRF_May, WRF_Jun, WRF_Jul, WRF_Aug, WRF_JJA, WRF_MJJA], c='b',marker='s', label='WRF_Morr')
 ax1.scatter(x_axis, [WRF_Thom_May, WRF_Thom_Jun, WRF_Thom_Jul, WRF_Thom_Aug, WRF_Thom_JJA, WRF_Thom_MJJA], c='g',marker='s', label='WRF_Thom')
+#-------
+
 ax1.scatter(x_axis, [ARM_May, ARM_Jun, ARM_Jul, ARM_Aug, ARM_JJA, ARM_MJJA], c='r', marker='d', label='ARM obs')
 ax1.scatter(x_axis, [NOAA_May, NOAA_Jun, NOAA_Jul, NOAA_Aug, NOAA_JJA, NOAA_MJJA], c='b', marker='d', label='NOAA obs')
 #ax1.set_yticks(np.arange(0.0,4.6,0.5))

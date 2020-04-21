@@ -12,7 +12,7 @@ label_string = "_Thompson"
 VAR_WRF_str = (/"LH_regrid"/)
 VAR_obs_str = (/"hfls"/)
 
-WRF_file = "/home/qin5/Data/WRF.postprocessing.extract.Thom.nc"
+WRF_file = "/home/qin5/Data/WRF.postprocessing.extract.hourly.Thom.05678.nc"
 obs_file = "/home/qin5/Data/CAUSES_obs/LE_H_FLUXNET_2011_conus_1dgrid.nc"
 
 WRF_f = addfile(WRF_file,"r")

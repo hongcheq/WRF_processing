@@ -11,7 +11,7 @@ label_string = "_Thompson"
 VAR_WRF_str = (/"LH_regrid"/)
 VAR_obs_str = (/"E_b_regrid"/)
 
-WRF_file = "/home/qin5/Data/WRF.postprocessing.extract.Thom.nc"
+WRF_file = "/home/qin5/Data/WRF.postprocessing.extract.hourly.Thom.05678.nc"
 obs_file = "/home/qin5/Data/GLEAM/E_2011_GLEAM.processed.daily.nc"
 
 WRF_f = addfile(WRF_file,"r")

@@ -133,8 +133,8 @@ res@tmXBValues      = (/1.0,2.0,3.0,4.0,5.0/)
 
 res@xyMarkLineMode     = "Markers"
 ;res@xyMonoMarkerColor  = False          ; Allow different colors for markers
-res@xyMarkerColors     = (/"green","blue","black"/)
-res@xyMarkerSizeF     = 0.01
+res@xyMarkerColors     = (/"blue","green","black"/)
+res@xyMarkerSizeF     = 0.015
 
 res@xyMarkers          = (/0,2,4,5,6/)
 

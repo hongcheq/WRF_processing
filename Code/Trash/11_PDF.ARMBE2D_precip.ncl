@@ -5,7 +5,7 @@ load "/home/qin5/Programming/NCL/my_funcs_and_procs/Calendar.ncl"
 begin
 
 dir_WRF = "/home/qin5/Data/WRF.postprocessing.extract.hourly.nc"
-dir_WRF_Thom = "/home/qin5/Data/WRF.postprocessing.extract.hourly.Thom.nc"
+dir_WRF_Thom = "/home/qin5/Data/WRF.postprocessing.extract.hourly.Thom.05678.nc"
 
 f_WRF = addfile(dir_WRF,"r")
 f_WRF_Thom = addfile(dir_WRF_Thom,"r")
@@ -46,13 +46,10 @@ RAIN_WRF_Thom_SGP = RAIN_WRF_Thom_SGP * 24.0
 RAIN_WRF_Thom_SGP@units = "mm/day"
 printVarSummary(RAIN_WRF_Thom_SGP)
 
-RAIN_WRF_Thom_SGP_May = RAIN_WRF_Thom_SGP(:) ; the test .nc only contains a few days.
-;------- uncomment
-;RAIN_WRF_Thom_SGP_May = RAIN_WRF_Thom_SGP(0:737)
-;RAIN_WRF_Thom_SGP_Jun = RAIN_WRF_Thom_SGP(738:1457)
-;RAIN_WRF_Thom_SGP_Jul = RAIN_WRF_Thom_SGP(1458:2201)
-;RAIN_WRF_Thom_SGP_Aug = RAIN_WRF_Thom_SGP(2202:)
-;-------
+RAIN_WRF_Thom_SGP_May = RAIN_WRF_Thom_SGP(0:737)
+RAIN_WRF_Thom_SGP_Jun = RAIN_WRF_Thom_SGP(738:1457)
+RAIN_WRF_Thom_SGP_Jul = RAIN_WRF_Thom_SGP(1458:2201)
+RAIN_WRF_Thom_SGP_Aug = RAIN_WRF_Thom_SGP(2202:)
 
 ;;----------ARMBE2DGRID areal average----------------
 precip05 = f_ARM_05->precip_rate
@@ -83,6 +80,7 @@ opt = True
 bin_min = 0.0
 bin_max = 20.0
 bin_n  = 50
+;bin_n  = 20
 bin_width = (bin_max - bin_min) / bin_n
 
 opt          = True
@@ -105,15 +103,14 @@ RAIN_WRF_Aug_pdf = RAIN_WRF_Aug_pdf / bin_width
 RAIN_WRF_Thom_May_pdf = pdfx(RAIN_WRF_Thom_SGP_May,bin_n,opt)
 RAIN_WRF_Thom_May_pdf = RAIN_WRF_Thom_May_pdf / bin_width
 
-;--------uncomment
-;RAIN_WRF_Thom_Jun_pdf = pdfx(RAIN_WRF_Thom_SGP_Jun,bin_n,opt)
-;RAIN_WRF_Thom_Jun_pdf = RAIN_WRF_Thom_Jun_pdf / bin_width
-;
-;RAIN_WRF_Thom_Jul_pdf = pdfx(RAIN_WRF_Thom_SGP_Jul,bin_n,opt)
-;RAIN_WRF_Thom_Jul_pdf = RAIN_WRF_Thom_Jul_pdf / bin_width
-;
-;RAIN_WRF_Thom_Aug_pdf = pdfx(RAIN_WRF_Thom_SGP_Aug,bin_n,opt)
-;RAIN_WRF_Thom_Aug_pdf = RAIN_WRF_Thom_Aug_pdf / bin_width
+RAIN_WRF_Thom_Jun_pdf = pdfx(RAIN_WRF_Thom_SGP_Jun,bin_n,opt)
+RAIN_WRF_Thom_Jun_pdf = RAIN_WRF_Thom_Jun_pdf / bin_width
+
+RAIN_WRF_Thom_Jul_pdf = pdfx(RAIN_WRF_Thom_SGP_Jul,bin_n,opt)
+RAIN_WRF_Thom_Jul_pdf = RAIN_WRF_Thom_Jul_pdf / bin_width
+
+RAIN_WRF_Thom_Aug_pdf = pdfx(RAIN_WRF_Thom_SGP_Aug,bin_n,opt)
+RAIN_WRF_Thom_Aug_pdf = RAIN_WRF_Thom_Aug_pdf / bin_width
 ;-------------
 
 ;;---------------- Calculate PDF of ARMBE
@@ -156,24 +153,34 @@ res@gsnFrame = False
 ;==========================
  res@xyLineThicknesses = (/3.0,3.0,3,0/)
  res@xyXStyle          = "Log"
+ res@xyYStyle          = "Log"
+
+res@trYMinF = 0.1
+;res@trYMaxF = 10.0
+res@trXMinF = 0.1
+;res@trXMaxF = 100.0
 
 ;------------------------
 res@tiMainString = "precip, PDF, May"
 res@tiYAxisString = "PDF, [% / (mm/day)]"
 res@tiXAxisString = "mm/day"
 
+
+;;; if setting Y-axis to Log scale, the value of any of the bin should not be = 0;
+;;; Or your have the "XyPlotSetValues:The Minimum Y value is <= 0.0 NhlLOG invalid:Changing xyYStyle to NhlLINEAR" message
+;;; Y axis is back to linear
+
+
 plot(0) = gsn_csm_xy(wks,RAIN_WRF_May_pdf@bin_center,(/RAIN_WRF_May_pdf,RAIN_WRF_Thom_May_pdf,precip_ARM_SGP_May_pdf/),res)
 
-;----------- uncomment
-;res@tiMainString = "precip, PDF, Jun"
-;plot(1) = gsn_csm_xy(wks,RAIN_WRF_Jun_pdf@bin_center,(/RAIN_WRF_Jun_pdf,RAIN_WRF_Thom_Jun_pdf,precip_ARM_SGP_Jun_pdf/),res)
-;
-;res@tiMainString = "precip, PDF, Jul"
-;plot(2) = gsn_csm_xy(wks,RAIN_WRF_Jul_pdf@bin_center,(/RAIN_WRF_Jul_pdf,RAIN_WRF_Thom_Jul_pdf,precip_ARM_SGP_Jul_pdf/),res)
-;
-;res@tiMainString = "precip, PDF, Aug"
-;plot(3) = gsn_csm_xy(wks,RAIN_WRF_Aug_pdf@bin_center,(/RAIN_WRF_Aug_pdf,RAIN_WRF_Thom_Aug_pdf,precip_ARM_SGP_Aug_pdf/),res)
-;-----------------------
+res@tiMainString = "precip, PDF, Jun"
+plot(1) = gsn_csm_xy(wks,RAIN_WRF_Jun_pdf@bin_center,(/RAIN_WRF_Jun_pdf,RAIN_WRF_Thom_Jun_pdf,precip_ARM_SGP_Jun_pdf/) ,res)
+
+res@tiMainString = "precip, PDF, Jul"
+plot(2) = gsn_csm_xy(wks,RAIN_WRF_Jul_pdf@bin_center,(/RAIN_WRF_Jul_pdf,RAIN_WRF_Thom_Jul_pdf,precip_ARM_SGP_Jul_pdf/) ,res)
+
+res@tiMainString = "precip, PDF, Aug"
+plot(3) = gsn_csm_xy(wks,RAIN_WRF_Aug_pdf@bin_center,(/RAIN_WRF_Aug_pdf,RAIN_WRF_Thom_Aug_pdf,precip_ARM_SGP_Aug_pdf/),res)
 ;----------------------
 resP = True
 

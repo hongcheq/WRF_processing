@@ -12,13 +12,15 @@ VAR_obs_str = (/"prect"/)
 label_string = "_Thompson"
 
 ;WRF_file = "WRF.postprocessing.extract.nc"
-WRF_file = "/home/qin5/Data/WRF.postprocessing.extract.Thom.nc"
+WRF_file = "/home/qin5/Data/WRF.postprocessing.extract.hourly.Thom.05678.nc"
 obs_file = "/home/qin5/Data/CAUSES_obs/prect_gpcp_2011_daily.nc"
 
 WRF_f = addfile(WRF_file,"r")
 obs_f = addfile(obs_file,"r")
 
 VAR_WRF = WRF_f->$VAR_WRF_str$
+VAR_WRF = VAR_WRF * 24.0 ; from mm/hr to mm/day
+VAR_WRF@units = "mm/day"
 
 VAR_obs = obs_f->$VAR_obs_str$
 
@@ -100,6 +102,7 @@ printVarSummary(VAR_bias_May)
   plot(0) = gsn_csm_contour_map(wks,VAR_WRF_May,res) 
   res@gsnCenterString = "WRF, Jun"
   plot(1) = gsn_csm_contour_map(wks,VAR_WRF_Jun,res) 
+
   res@gsnCenterString = "WRF, Jul"
   plot(2) = gsn_csm_contour_map(wks,VAR_WRF_Jul,res) 
   res@gsnCenterString = "WRF, Aug"
@@ -109,6 +112,7 @@ printVarSummary(VAR_bias_May)
   plot(4) = gsn_csm_contour_map(wks,VAR_obs_May,res) 
   res@gsnCenterString = "GPCP, Jun"
   plot(5) = gsn_csm_contour_map(wks,VAR_obs_Jun,res) 
+
   res@gsnCenterString = "GPCP, Jul"
   plot(6) = gsn_csm_contour_map(wks,VAR_obs_Jul,res) 
   res@gsnCenterString = "GPCP, Aug"
@@ -124,6 +128,7 @@ printVarSummary(VAR_bias_May)
   plot(8) = gsn_csm_contour_map(wks,VAR_bias_May,res) 
   res@gsnCenterString = "WRF - GPCP, Jun"
   plot(9) = gsn_csm_contour_map(wks,VAR_bias_Jun,res) 
+
   res@gsnCenterString = "WRF - GPCP, Jul"
   plot(10) = gsn_csm_contour_map(wks,VAR_bias_Jul,res) 
   res@gsnCenterString = "WRF - GPCP, Aug"

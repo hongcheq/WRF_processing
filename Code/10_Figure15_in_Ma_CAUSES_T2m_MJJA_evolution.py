@@ -103,6 +103,16 @@ T2_WRF_daily = T2_regrid.resample(time='1D').mean(dim='time')
 T2_WRF_SGP = T2_WRF_daily.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
 #print(T2_WRF_SGP)
 
+### RUNOFF
+SFROFF_regrid = ds_WRF['SFROFF_regrid']
+SFROFF_WRF_daily = SFROFF_regrid.resample(time='1D').mean(dim='time')
+SFROFF_WRF_SGP = SFROFF_WRF_daily.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
+
+UDROFF_regrid = ds_WRF['UDROFF_regrid']
+UDROFF_WRF_daily = UDROFF_regrid.resample(time='1D').mean(dim='time')
+UDROFF_WRF_SGP = UDROFF_WRF_daily.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
+exit()
+
 ### ======================== WRF_Thom
 RAIN_tot_regrid_Thom = ds_WRF_Thom['RAIN_tot_regrid']
 RAIN_WRF_Thom_daily = RAIN_tot_regrid_Thom.resample(time='1D').mean(dim='time')

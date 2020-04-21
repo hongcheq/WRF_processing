@@ -11,7 +11,7 @@ import pandas
 #label_string = "_Morr"
 label_string = "_Thom"
 
-ds_WRF = xr.open_dataset('/home/qin5/Data/WRF.postprocessing.extract.hourly.Thom.nc')
+ds_WRF = xr.open_dataset('/home/qin5/Data/WRF.postprocessing.extract.hourly.Thom.05678.nc')
 
 ds_ARMBE2D_01 = xr.open_dataset('/home/qin5/Data/ARMBE2DGRID/sgparmbe2dgridX1.c1.20110101.000000.nc')
 ds_ARMBE2D_02 = xr.open_dataset('/home/qin5/Data/ARMBE2DGRID/sgparmbe2dgridX1.c1.20110201.000000.nc')
