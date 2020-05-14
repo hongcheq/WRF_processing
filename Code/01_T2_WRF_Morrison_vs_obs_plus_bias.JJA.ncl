@@ -67,6 +67,13 @@ printVarSummary(VAR_WRF_month)
 printVarSummary(VAR_obs_month)
 printVarSummary(VAR_obs_test)
 
+;-----create daily values for use in other programs
+VAR_obs_daily = calculate_daily_values(VAR_obs, "avg", 0, False)
+VAR_obs_daily = VAR_obs_daily + 273.15
+VAR_obs_daily@units = "K"
+VAR_obs_daily!0 = "time"
+printVarSummary(VAR_obs_daily)
+
 ;------------- May, Jun, Jul, Aug --------
 
 VAR_WRF_May = VAR_WRF_month(0,:,:)
@@ -122,10 +129,10 @@ printVarSummary(VAR_bias_May)
   
   res@gsnAddCyclic = False 
 
-  res@mpMaxLatF                   = 57.0           ; choose subregion           
-  res@mpMinLatF                   = 18.0
-  res@mpMaxLonF                   = 292.0
-  res@mpMinLonF                   = 233.0
+  res@mpMaxLatF                   = 52.0           ; choose subregion           
+  res@mpMinLatF                   = 25.0
+  res@mpMaxLonF                   = 290.0
+  res@mpMinLonF                   = 235.0
 
 res@mpOutlineBoundarySets     = "GeophysicalAndUSStates"; turn on states
   res@mpDataBaseVersion         = "MediumRes"             ; select database
@@ -146,6 +153,24 @@ res@mpOutlineBoundarySets     = "GeophysicalAndUSStates"; turn on states
   plot(2) = gsn_csm_contour_map(wks,VAR_bias_JJA,res) 
 
 ;************************************************
+; create points for box
+ ypts = (/ 39.0,  39.0,  42.0,  42.0, 39.0/)
+ xpts = (/-101.0, -97.0,-97.0, -101.0,-101.0/)
+;************************************************
+; add the box
+;************************************************
+  resp                  = True                      ; polyline mods desired
+  resp@gsLineColor      = "black"                     ; color of lines
+  resp@gsLineThicknessF = 2.0                       ; thickness of lines
+ ; resp@gsLineLabelString= "test"                    ; adds a line label string
+
+  dum = new(4,graphic)  
+; draw each line separately. Each line must contain two points.
+  do i = 0 , 3
+    dum(i)=gsn_add_polyline(wks,plot(2),xpts(i:i+1),ypts(i:i+1),resp)      
+  end do 
+
+;************************************************
 ; create panel
 ;************************************************
   resP                     = True                ; modify the panel plot
@@ -155,6 +180,16 @@ res@mpOutlineBoundarySets     = "GeophysicalAndUSStates"; turn on states
   resP@lbLabelFontHeightF  = 0.007               ; make labels smaller
 
   gsn_panel(wks,plot,(/3,1/),resP)               ; now draw as one plot
+
+;--------- output VAR_obs_daily to .nc file--
+
+system("rm -f noaa_conus_T2M_temperature_1p0deg_hourly_2011.ncl.nc")   ; remove any pre-existing file
+ncdf = addfile("noaa_conus_T2M_temperature_1p0deg_hourly_2011.ncl.nc" ,"c")  ; open output netCDF file
+filedimdef(ncdf,"time",-1,True) 
+ncdf->t2m_noaa  = VAR_obs_daily 
+
+
+
 
 
 

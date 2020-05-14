@@ -36,6 +36,7 @@ RAIN_regrid_Thom.attrs['units'] = "mm/day"
 RAIN_JJA = RAIN_regrid[738:,:,:]
 RAIN_JJA_Thom = RAIN_regrid_Thom[738:,:,:]
 
+
 RAIN_WRF_JJA = RAIN_JJA.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
 RAIN_WRF_JJA_Thom = RAIN_JJA_Thom.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
 

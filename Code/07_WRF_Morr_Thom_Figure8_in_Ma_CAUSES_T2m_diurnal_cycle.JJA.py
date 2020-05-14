@@ -126,7 +126,7 @@ ax1.plot(x_axis, WRF_JJA_Thom, 'g--', label='WRF_Thom, JJA')
 
 ax1.set_yticks(np.arange(294.0,316.0,2.0))
 ax1.set_xticks(np.arange(0.0,24.1,3.0))
-ax1.set(xlabel='UTC(hr)', ylabel='T2m, K', title='T2m, WRF'+label_string+' vs ARM SGP')
+ax1.set(xlabel='UTC(hr)', ylabel='T2m, K', title='T2m, WRF vs ARM SGP')
 ax1.grid()
 ax1.legend(loc='lower right')
 

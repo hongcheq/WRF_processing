@@ -135,10 +135,10 @@ printVarSummary(VAR_bias_May)
   
   res@gsnAddCyclic = False 
 
- res@mpMaxLatF                   = 57.0
- res@mpMinLatF                   = 18.0
- res@mpMaxLonF                   = 292.0
- res@mpMinLonF                   = 233.0
+ res@mpMaxLatF                   = 52.0
+ res@mpMinLatF                   = 25.0
+ res@mpMaxLonF                   = 290.0
+ res@mpMinLonF                   = 235.0
 
 
   gsn_reverse_colormap(wks)

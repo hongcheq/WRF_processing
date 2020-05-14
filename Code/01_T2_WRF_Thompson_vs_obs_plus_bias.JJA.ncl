@@ -125,10 +125,10 @@ VAR_bias_JJA = VAR_WRF_JJA - VAR_obs_JJA
   
   res@gsnAddCyclic = False 
 
-  res@mpMaxLatF                   = 57.0           ; choose subregion           
-  res@mpMinLatF                   = 18.0
-  res@mpMaxLonF                   = 292.0
-  res@mpMinLonF                   = 233.0
+  res@mpMaxLatF                   = 52.0           ; choose subregion           
+  res@mpMinLatF                   = 25.0
+  res@mpMaxLonF                   = 290.0
+  res@mpMinLonF                   = 235.0
 
 res@mpOutlineBoundarySets     = "GeophysicalAndUSStates"; turn on states
   res@mpDataBaseVersion         = "MediumRes"             ; select database

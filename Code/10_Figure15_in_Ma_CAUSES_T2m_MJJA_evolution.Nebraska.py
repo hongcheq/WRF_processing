@@ -1,0 +1,514 @@
+'''
+Function: analysis for WRF 2011 May-Aug outputs, as in Ma CAUSES paper Figure 15.
+Date: 20200325
+'''
+
+import numpy as np
+import xarray as xr
+import matplotlib.pyplot as plt
+import pandas
+import matplotlib.dates as mdates
+
+label_string1 = "_Morr"
+label_string2 = "_Thom"
+
+#ds_WRF = xr.open_dataset('/home/qin5/Data/WRF.postprocessing.extract.hourly.nc')
+ds_WRF = xr.open_dataset('/home/qin5/Data/WRF.postprocessing.extract.hourly.Morri.nc')
+ds_SM_WRF = xr.open_dataset('/home/qin5/Data/WRF.postprocessing.extract.hourly.SMOIS.nc')
+
+#ds_WRF_Thom = xr.open_dataset('/home/qin5/Data/WRF.postprocessing.extract.hourly.Thom.056.nc')
+ds_WRF_Thom = xr.open_dataset('/home/qin5/Data/WRF.postprocessing.extract.hourly.Thom.05678.nc')
+
+##ds_pr_GPCP = xr.open_dataset('/home/qin5/Data/CAUSES_obs/prect_gpcp_2011_daily.nc')
+
+#ds_ARMBE2D_05 = xr.open_dataset('/home/qin5/Data/ARMBE2DGRID/sgparmbe2dgridX1.c1.20110501.000000.nc')
+#ds_ARMBE2D_06 = xr.open_dataset('/home/qin5/Data/ARMBE2DGRID/sgparmbe2dgridX1.c1.20110601.000000.nc')
+#ds_ARMBE2D_07 = xr.open_dataset('/home/qin5/Data/ARMBE2DGRID/sgparmbe2dgridX1.c1.20110701.000000.nc')
+#ds_ARMBE2D_08 = xr.open_dataset('/home/qin5/Data/ARMBE2DGRID/sgparmbe2dgridX1.c1.20110801.000000.nc')
+
+ds_pr_stage4 = xr.open_dataset('/home/qin5/Data/Precip_StageIV/Precip_Stage_IV.2011045678.postprocessing.extract.hourly.nc')
+
+##ds_FLUXNET = xr.open_dataset('/home/qin5/Data/CAUSES_obs/LE_H_FLUXNET_2011_conus_1dgrid.nc')
+
+ds_GLEAM = xr.open_dataset('/home/qin5/Data/GLEAM/E_2011_GLEAM.processed.daily.nc')
+
+#ds_t2m = xr.open_dataset('/home/qin5/Data/CAUSES_obs/noaa_conus_T2M_temperature_1p0deg_hourly_2011_MAMJJA.nc')
+ds_t2m = xr.open_dataset('noaa_conus_T2M_temperature_1p0deg_hourly_2011.ncl.nc') # this file pre-proccessed.
+
+## Nebraska box
+lat_1 = 39.0
+lat_2 = 42.0
+lon_1 = -101.0
+lon_2 = -97.0
+
+### WRF calculate daily mean at Nebraska domain
+RAIN_tot_regrid = ds_WRF['RAIN_tot_regrid']
+RAIN_WRF_daily = RAIN_tot_regrid.resample(time='1D').mean(dim='time')
+RAIN_WRF_NE = RAIN_WRF_daily.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
+RAIN_WRF_NE = RAIN_WRF_NE * 24.0 # from mm/hr to mm/day
+RAIN_WRF_NE.attrs['units'] = "mm/day"
+#print(RAIN_WRF_NE)
+
+#### accumulative rain
+RAIN_WRF_ACC = np.asarray([RAIN_WRF_NE[0:i].values.sum() for i in np.arange(0,122,1)])
+RAIN_WRF_ACC = xr.DataArray(RAIN_WRF_ACC, dims=('time'), coords = {'time':RAIN_WRF_NE.coords['time'] })
+RAIN_WRF_ACC.attrs['units'] = "mm"
+RAIN_WRF_ACC.attrs['long_name'] = "accumulated total precip"
+#print(RAIN_WRF_ACC)
+
+### -------- calculate evaporation from latent heat
+Lv_water = 2264705.0 # J/kg
+
+LH_regrid = ds_WRF['LH_regrid']
+LH_WRF_daily = LH_regrid.resample(time='1D').mean(dim='time')
+LH_WRF_NE = LH_WRF_daily.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
+LH_WRF_NE_W_m2 = LH_WRF_NE
+LH_WRF_NE = LH_WRF_NE * 3600.0*24.0/Lv_water # from W/m2 to mm/day
+LH_WRF_NE.attrs['units'] = "mm/day"
+LH_WRF_NE.attrs['long_name'] = "ET converted from latent heat flux, mm/day"
+#print(LH_WRF_NE)
+
+#### accumulative evaporation
+evap_WRF_ACC = np.asarray([LH_WRF_NE[0:i].values.sum() for i in np.arange(0,122,1)])
+evap_WRF_ACC = xr.DataArray(evap_WRF_ACC, dims=('time'), coords = {'time':LH_WRF_NE.coords['time'] })
+evap_WRF_ACC.attrs['units'] = "mm"
+evap_WRF_ACC.attrs['long_name'] = "accumulated ET, converted from latent heat flux"
+#print(evap_WRF_ACC)
+
+#### soil moisture at 5cm depth 
+#SMOIS_regrid = ds_SM_WRF['SMOIS_regrid'][:,0,:,:]   # depth 0 is 5-cm
+#SMOIS_WRF_daily = SMOIS_regrid.resample(time='1D').mean(dim='time')
+#SMOIS_WRF_SGP = SMOIS_WRF_daily.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
+#SMOIS_WRF_SGP.attrs['units'] = "m3/m3"
+##print(SMOIS_WRF_SGP)
+#
+#### soil moisture at 0.25 depth
+#SMOIS25_regrid = ds_SM_WRF['SMOIS_regrid'][:,1,:,:]   # depth 0 is 25-cm
+#SMOIS25_WRF_daily = SMOIS25_regrid.resample(time='1D').mean(dim='time')
+#SMOIS25_WRF_SGP = SMOIS25_WRF_daily.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
+#SMOIS25_WRF_SGP.attrs['units'] = "m3/m3"
+##print(SMOIS25_WRF_SGP)
+
+### evaporative fraction LH/(SH+LH)
+HFX_regrid = ds_WRF['HFX_regrid']
+EF_regrid = LH_regrid / (HFX_regrid+LH_regrid)
+EF_regrid = EF_regrid.where( (HFX_regrid+LH_regrid) > 10.0)  # to avoid unrealistic values when denominator is too small 
+
+EF_WRF_daily = EF_regrid.resample(time='1D').mean(dim='time')
+EF_WRF_NE = EF_WRF_daily.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
+EF_WRF_NE.attrs['units'] = "unitless"
+#print(EF_WRF_NE)
+
+### Sensible heat flux
+HFX_WRF_daily = HFX_regrid.resample(time='1D').mean(dim='time')
+HFX_WRF_NE = HFX_WRF_daily.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
+HFX_WRF_NE.attrs['units'] = "unitless"
+#print(EF_WRF_NE)
+
+### T2m
+T2_regrid = ds_WRF['T2_regrid']
+T2_WRF_daily = T2_regrid.resample(time='1D').mean(dim='time')
+T2_WRF_NE = T2_WRF_daily.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
+#print(T2_WRF_NE)
+
+#### RUNOFF
+#SFROFF_regrid = ds_WRF['SFROFF_regrid']
+#SFROFF_WRF_daily = SFROFF_regrid.resample(time='1D').mean(dim='time')
+#SFROFF_WRF_SGP = SFROFF_WRF_daily.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
+#
+#UDROFF_regrid = ds_WRF['UDROFF_regrid']
+#UDROFF_WRF_daily = UDROFF_regrid.resample(time='1D').mean(dim='time')
+#UDROFF_WRF_SGP = UDROFF_WRF_daily.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
+#
+### ======================== WRF_Thom
+RAIN_tot_regrid_Thom = ds_WRF_Thom['RAIN_tot_regrid']
+RAIN_WRF_Thom_daily = RAIN_tot_regrid_Thom.resample(time='1D').mean(dim='time')
+RAIN_WRF_Thom_NE = RAIN_WRF_Thom_daily.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
+RAIN_WRF_Thom_NE = RAIN_WRF_Thom_NE * 24.0 # from mm/hr to mm/day
+RAIN_WRF_Thom_NE.attrs['units'] = "mm/day"
+#print(RAIN_WRF_Thom_NE)
+
+#### accumulative rain
+#RAIN_WRF_Thom_ACC = np.asarray([RAIN_WRF_Thom_SGP[0:i].values.sum() for i in np.arange(0,12,1)])
+#--------uncomment
+## Note the Zhe WRF simulation WRF_Thompson only goes to 08-27, and the first 9 hours of 08-28.
+RAIN_WRF_Thom_ACC = np.asarray([RAIN_WRF_Thom_NE[0:i].values.sum() for i in np.arange(0,120,1)])
+#-----------
+RAIN_WRF_Thom_ACC = xr.DataArray(RAIN_WRF_Thom_ACC, dims=('time'), coords = {'time':RAIN_WRF_Thom_NE.coords['time'] })
+RAIN_WRF_Thom_ACC.attrs['units'] = "mm"
+RAIN_WRF_Thom_ACC.attrs['long_name'] = "accumulated total precip"
+
+### -------- calculate evaporation from latent heat
+LH_regrid_Thom = ds_WRF_Thom['LH_regrid']
+LH_WRF_Thom_daily = LH_regrid_Thom.resample(time='1D').mean(dim='time')
+LH_WRF_Thom_NE = LH_WRF_Thom_daily.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
+LH_WRF_Thom_NE_W_m2 = LH_WRF_Thom_NE
+LH_WRF_Thom_NE = LH_WRF_Thom_NE * 3600.0*24.0/Lv_water # from W/m2 to mm/day
+LH_WRF_Thom_NE.attrs['units'] = "mm/day"
+LH_WRF_Thom_NE.attrs['long_name'] = "ET converted from latent heat flux, mm/day"
+
+#### accumulative evaporation
+#evap_WRF_Thom_ACC = np.asarray([LH_WRF_Thom_SGP[0:i].values.sum() for i in np.arange(0,61,1)])
+#------uncomment
+evap_WRF_Thom_ACC = np.asarray([LH_WRF_Thom_NE[0:i].values.sum() for i in np.arange(0,120,1)])
+#-------
+
+evap_WRF_Thom_ACC = xr.DataArray(evap_WRF_Thom_ACC, dims=('time'), coords = {'time':LH_WRF_Thom_NE.coords['time'] })
+evap_WRF_Thom_ACC.attrs['units'] = "mm"
+evap_WRF_Thom_ACC.attrs['long_name'] = "accumulated ET, converted from latent heat flux"
+
+#### soil moisture at 5cm depth 
+#SMOIS_regrid_Thom = ds_WRF_Thom['SMOIS_regrid'][:,0,:,:]   # depth 0 is 5-cm
+#SMOIS_WRF_Thom_daily = SMOIS_regrid_Thom.resample(time='1D').mean(dim='time')
+#SMOIS_WRF_Thom_SGP = SMOIS_WRF_Thom_daily.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
+#SMOIS_WRF_Thom_SGP.attrs['units'] = "m3/m3"
+#
+#### soil moisture at 0.25 depth
+#SMOIS25_regrid_Thom = ds_WRF_Thom['SMOIS_regrid'][:,1,:,:]   # depth 0 is 25-cm
+#SMOIS25_WRF_Thom_daily = SMOIS25_regrid_Thom.resample(time='1D').mean(dim='time')
+#SMOIS25_WRF_Thom_SGP = SMOIS25_WRF_Thom_daily.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
+#SMOIS25_WRF_Thom_SGP.attrs['units'] = "m3/m3"
+#
+### evaporative fraction LH/(SH+LH)
+HFX_regrid_Thom = ds_WRF_Thom['HFX_regrid']
+EF_regrid_Thom = LH_regrid_Thom / (HFX_regrid_Thom+LH_regrid_Thom)
+EF_regrid_Thom = EF_regrid_Thom.where( (HFX_regrid_Thom+LH_regrid_Thom) > 10.0)  # to avoid unrealistic values when denominator is too small 
+
+EF_WRF_Thom_daily = EF_regrid_Thom.resample(time='1D').mean(dim='time')
+EF_WRF_Thom_NE = EF_WRF_Thom_daily.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
+EF_WRF_Thom_NE.attrs['units'] = "unitless"
+
+### Sensible heat flux
+HFX_WRF_Thom_daily = HFX_regrid_Thom.resample(time='1D').mean(dim='time')
+HFX_WRF_Thom_NE = HFX_WRF_Thom_daily.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
+HFX_WRF_Thom_NE.attrs['units'] = "unitless"
+
+### T2m
+T2_regrid_Thom = ds_WRF_Thom['T2_regrid']
+T2_WRF_Thom_daily = T2_regrid_Thom.resample(time='1D').mean(dim='time')
+T2_WRF_Thom_NE = T2_WRF_Thom_daily.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
+
+#### runoff
+#SFROFF_regrid_Thom = ds_WRF_Thom['SFROFF_regrid']
+#SFROFF_WRF_Thom_daily = SFROFF_regrid_Thom.resample(time='1D').mean(dim='time')
+#SFROFF_WRF_Thom_SGP = SFROFF_WRF_Thom_daily.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
+#
+#UDROFF_regrid_Thom = ds_WRF_Thom['UDROFF_regrid']
+#UDROFF_WRF_Thom_daily = UDROFF_regrid_Thom.resample(time='1D').mean(dim='time')
+#UDROFF_WRF_Thom_SGP = UDROFF_WRF_Thom_daily.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
+#
+### ---------------------------
+### obs at the Nebraska box
+
+### Stage IV precip dataset
+pr_st4 = ds_pr_stage4['precip_st4_regrid'][718:,:,:]  # skip Apr values
+#print(pr_st4)
+
+pr_st4_daily = pr_st4.resample(time='1D').mean('time')
+pr_st4_NE = pr_st4_daily.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
+pr_st4_NE = pr_st4_NE * 24.0 # from mm/hr to mm/day
+pr_st4_NE.attrs['units'] = "mm/day"
+#print(pr_st4_ARM_SGP)
+
+### Add GLEAM Evaporation, which can be convert to LHFLX W/m2
+E_a = ds_GLEAM['E_a_regrid'][120:243,:,:]   # May-Aug
+E_b = ds_GLEAM['E_b_regrid'][120:243,:,:]
+
+E_a = E_a * 2265000.0 / (3600*24)   # from Evaporation mm/day to W/m2
+E_a.attrs['units'] = "W/m2"
+
+E_b = E_b * 2265000.0 / (3600*24)   # from Evaporation mm/day to W/m2
+E_b.attrs['units'] = "W/m2"
+
+E_a_NE = E_a.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
+E_b_NE = E_b.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
+
+### accumulative rain
+precip_NE_ACC = np.asarray([pr_st4_NE[0:i].values.sum() for i in np.arange(0,123,1)])
+precip_NE_ACC = xr.DataArray(precip_NE_ACC, dims=('time'), coords = {'time':pr_st4_NE.coords['time'] })
+precip_NE_ACC.attrs['units'] = "mm"
+precip_NE_ACC.attrs['long_name'] = "accumulated total precip"
+#print(precip_NE_ACC)
+
+### evaporation converted from latent heat flux
+latent_NE_W_m2 = E_a_NE
+latent_NE = latent_NE_W_m2 * 3600.0*24.0/Lv_water # from W/m2 to mm/day 
+latent_NE.attrs['units'] = "mm/day"
+#print(latent_ARM_SGP)
+
+### accumulative ET
+evap_NE_ACC = np.asarray([latent_NE[0:i].values.sum() for i in np.arange(0,123,1)])
+evap_NE_ACC = xr.DataArray(evap_NE_ACC, dims=('time'), coords = {'time':latent_NE.coords['time'] })
+evap_NE_ACC.attrs['units'] = "mm"
+evap_NE_ACC.attrs['long_name'] = "accumulated total ET, converted from latent heat flux"
+#print(evap_NE_ACC)
+
+#### soil moisture at 5-cm
+#SM05 = ds_ARMBE2D_05['soil_moisture_swats'][:,0,:,:] # 0 layer is 5-cm
+#SM06 = ds_ARMBE2D_06['soil_moisture_swats'][:,0,:,:]
+#SM07 = ds_ARMBE2D_07['soil_moisture_swats'][:,0,:,:]
+#SM08 = ds_ARMBE2D_08['soil_moisture_swats'][:,0,:,:]
+#SM_05678 = xr.concat([SM05, SM06, SM07, SM08], dim='time')
+#SM_daily = SM_05678.resample(time='1D').mean('time')
+#SM_ARM_SGP = SM_daily.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
+#SM_ARM_SGP.attrs['units'] = "m3/m3"
+##print(SM_ARM_SGP)
+#
+#### soil moisture at 25-cm
+#SM25_05 = ds_ARMBE2D_05['soil_moisture_swats'][:,2,:,:] # 2 layer is 25-cm
+#SM25_06 = ds_ARMBE2D_06['soil_moisture_swats'][:,2,:,:]
+#SM25_07 = ds_ARMBE2D_07['soil_moisture_swats'][:,2,:,:]
+#SM25_08 = ds_ARMBE2D_08['soil_moisture_swats'][:,2,:,:]
+#SM25_05678 = xr.concat([SM25_05, SM25_06, SM25_07, SM25_08], dim='time')
+#SM25_daily = SM25_05678.resample(time='1D').mean('time')
+#SM25_ARM_SGP = SM25_daily.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
+#SM25_ARM_SGP.attrs['units'] = "m3/m3"
+##print(SM_ARM_SGP)
+#
+#### soil moisture from ebbr measurements (only 2.5cm)
+#SM05_ebbr = ds_ARMBE2D_05['soil_moisture_ebbr']
+#SM06_ebbr = ds_ARMBE2D_06['soil_moisture_ebbr']
+#SM07_ebbr = ds_ARMBE2D_07['soil_moisture_ebbr']
+#SM08_ebbr = ds_ARMBE2D_08['soil_moisture_ebbr']
+#SM_05678_ebbr = xr.concat([SM05_ebbr, SM06_ebbr, SM07_ebbr, SM08_ebbr], dim='time')
+#SM_daily_ebbr = SM_05678_ebbr.resample(time='1D').mean('time')
+#SM_ARM_SGP_ebbr = SM_daily_ebbr.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
+#SM_ARM_SGP_ebbr.attrs['units'] = "m3/m3"
+
+#### evaporative fraction = LH/(SH+LH)
+#sensible05 = -ds_ARMBE2D_05['sensible_heat_flux'] # upward means positive
+#sensible06 = -ds_ARMBE2D_06['sensible_heat_flux']
+#sensible07 = -ds_ARMBE2D_07['sensible_heat_flux']
+#sensible08 = -ds_ARMBE2D_08['sensible_heat_flux']
+#sensible_05678 = xr.concat([sensible05, sensible06, sensible07, sensible08], dim='time')
+#EF_obs = latent_05678/(latent_05678+sensible_05678)
+#EF_obs = EF_obs.where( (latent_05678+sensible_05678) > 10.0)  # to avoid unrealistic values when denominator is too small. 
+#
+#EF_daily = EF_obs.resample(time='1D').mean('time')
+#EF_ARM_SGP = EF_daily.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
+#EF_ARM_SGP.attrs['units'] = "unitless"
+#
+#### Sensible heat flux
+#sensible_daily = sensible_05678.resample(time='1D').mean('time')
+#sensible_ARM_SGP = sensible_daily.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
+#sensible_ARM_SGP.attrs['units'] = "unitless"
+
+### 2m air temperature 
+temp_daily = ds_t2m['t2m_noaa'][30:,:,:] # May-Aug
+temp_NE = temp_daily.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
+#print(temp_NE)
+
+### ---------------------------
+### Plot ###
+x_axis = RAIN_WRF_ACC.coords['time']
+
+### x-axis for datetime64
+years = mdates.YearLocator()   # every year
+months = mdates.MonthLocator()  # every month
+days = mdates.DayLocator()
+#dates_fmt = mdates.DateFormatter('%Y-%m-%d')
+dates_fmt = mdates.DateFormatter('%m-%d')
+
+fig = plt.figure(figsize=(14,14))
+fontsize = 5.5
+pos_adjust1 = 0.02
+
+ax1 = fig.add_subplot(4,4,1)
+ax1.text(s='Accumulated precip, mm', x=0, y=1.02, ha='left', va='bottom', \
+        fontsize=fontsize, transform=ax1.transAxes)
+ax1.plot(x_axis, RAIN_WRF_ACC.values, 'b-', label='precip, WRF'+label_string1)
+ax1.plot(x_axis[0:120], RAIN_WRF_Thom_ACC.values, 'g-', label='precip, WRF'+label_string2)
+## Note that WRF simulation does not have 08-31 data, only 122 values;
+## Therefore, also omit 08-31 data in ARMBE when plotting.
+ax1.plot(x_axis, precip_NE_ACC[0:122].values, 'k-', label='precip, stageIV')
+ax1.grid()
+ax1.legend(loc='upper left',fontsize=fontsize)
+## format the ticks
+ax1.xaxis.set_major_locator(months)
+ax1.xaxis.set_major_formatter(dates_fmt)
+
+### subplot (3,3,2)
+ax2 = fig.add_subplot(4,4,2)
+ax2.text(s='Accumulated ET (converted from LatentHeatFlux), mm', x=0, y=1.02, ha='left', va='bottom', \
+        fontsize=fontsize, transform=ax2.transAxes)
+ax2.plot(x_axis, evap_WRF_ACC.values, 'b-', label='ET, WRF'+label_string1)
+ax2.plot(x_axis[0:120], evap_WRF_Thom_ACC.values, 'g-', label='ET, WRF'+label_string2)
+#-------
+ax2.plot(x_axis, evap_NE_ACC[0:122].values, 'k-', label='ET, GLEAM va')
+ax2.grid()
+ax2.legend(loc='upper left',fontsize=fontsize)
+# format the ticks
+ax2.xaxis.set_major_locator(months)
+ax2.xaxis.set_major_formatter(dates_fmt)
+
+### subplot (3,3,3)
+ax3 = fig.add_subplot(4,4,3)
+ax3.text(s='P-E (Accumulated), mm', x=0, y=1.02, ha='left', va='bottom', \
+        fontsize=fontsize, transform=ax3.transAxes)
+ax3.plot(x_axis, (RAIN_WRF_ACC.values - evap_WRF_ACC.values), 'b-', label='P-E, WRF'+label_string1)
+ax3.plot(x_axis[0:120], (RAIN_WRF_Thom_ACC.values - evap_WRF_Thom_ACC.values), 'g-', label='P-E, WRF'+label_string2)
+#--------
+ax3.plot(x_axis, (precip_NE_ACC[0:122].values - evap_NE_ACC[0:122].values), 'k-', label='P-E, stageIV-GLEAMva')
+ax3.grid()
+ax3.legend(loc='lower left',fontsize=fontsize)
+# format the ticks
+ax3.xaxis.set_major_locator(months)
+ax3.xaxis.set_major_formatter(dates_fmt)
+
+#### subplot(3,3,4)
+#ax4 = fig.add_subplot(4,4,4)
+#ax4.text(s='soil moisture, m3/m3', x=0, y=1.02, ha='left', va='bottom', \
+#        fontsize=fontsize, transform=ax4.transAxes)
+#ax4.plot(x_axis, SMOIS_WRF_SGP.values, 'b-', label='5cm,WRF'+label_string1)
+#ax4.plot(x_axis, SMOIS25_WRF_SGP.values, 'b+', label='25cm,WRF'+label_string1)
+#ax4.plot(x_axis[0:120], SMOIS_WRF_Thom_SGP.values, 'g-', label='5cm,WRF'+label_string2)
+#ax4.plot(x_axis[0:120], SMOIS25_WRF_Thom_SGP.values, 'g+', label='25cm,WRF'+label_string2)
+#ax4.plot(x_axis, SM_ARM_SGP[0:122].values, 'k-', label='SM_swats,5cm')
+#ax4.plot(x_axis, SM25_ARM_SGP[0:122].values, 'k+', label='SM_swats,25cm')
+#ax4.plot(x_axis, SM_ARM_SGP_ebbr[0:122].values, 'k--', label='SM_ebbr,2.5cm')
+#ax4.set_ylim(0.05,0.35)
+##ax4.set_yticks([0.0,0.1,0.2,0.3,0.4])
+#ax4.grid()
+#ax4.legend(loc='lower left',fontsize=fontsize)
+## format the ticks
+#ax4.xaxis.set_major_locator(months)
+#ax4.xaxis.set_major_formatter(dates_fmt)
+#
+#### subplot(3,3,5)
+#ax5 = fig.add_subplot(4,4,5)
+#ax5.text(s='EF bias, WRF-obs, (EF=LH/(SH+LH)), unitless', x=0, y=1.02, ha='left', va='bottom', \
+#        fontsize=fontsize, transform=ax5.transAxes)
+#ax5.plot(x_axis, (EF_WRF_SGP.values - EF_ARM_SGP[0:122].values) , 'b-', label='WRF'+label_string1)
+#ax5.plot(x_axis[0:120], (EF_WRF_Thom_SGP.values - EF_ARM_SGP[0:120].values) , 'g-', label='WRF'+label_string2)
+##ax5.plot(x_axis, EF_WRF_SGP.values , 'b-', label='EF WRF')
+##ax5.plot(x_axis, EF_ARM_SGP[0:122].values, 'k-', label='EF obs')
+#ax5.grid()
+#ax5.legend(loc='lower left',fontsize=fontsize)
+## format the ticks
+#ax5.xaxis.set_major_locator(months)
+#ax5.xaxis.set_major_formatter(dates_fmt)
+#ax5.axhline(linewidth=1.5, color='k')
+#
+### suplot(3,3,6)
+ax6 = fig.add_subplot(4,4,6)
+ax6.text(s='T2 bias, WRF-noaa, K', x=0, y=1.02, ha='left', va='bottom', \
+        fontsize=fontsize, transform=ax6.transAxes)
+ax6.plot(x_axis, (T2_WRF_NE.values - temp_NE[0:122].values) , 'b-', label='WRF'+label_string1)
+ax6.plot(x_axis[0:120], (T2_WRF_Thom_NE.values - temp_NE[0:120].values) , 'g-', label='WRF'+label_string2)
+ax6.grid()
+ax6.legend(loc='lower left',fontsize=fontsize)
+# format the ticks
+ax6.xaxis.set_major_locator(months)
+ax6.xaxis.set_major_formatter(dates_fmt)
+ax6.axhline(linewidth=1.5, color='k')
+
+### Add precipitation rate
+ax7 = fig.add_subplot(4,4,7)
+ax7.text(s='Precip rate bias, WRF-stageIV, mm/day', x=0, y=1.02, ha='left', va='bottom', \
+        fontsize=fontsize, transform=ax7.transAxes)
+ax7.plot(x_axis, RAIN_WRF_NE.values - pr_st4_NE[0:122].values, 'b-', label='WRF'+label_string1+'-stageIV')
+ax7.plot(x_axis[0:120], RAIN_WRF_Thom_NE.values - pr_st4_NE[0:120].values, 'g-', label='WRF'+label_string2+'-stageIV')
+#ax7.plot(x_axis, precip_ARM_SGP[0:122].values, 'k-', label='precip rate, ARMBE2D')
+ax7.grid()
+ax7.legend(loc='upper left',fontsize=fontsize)
+## format the ticks
+ax7.xaxis.set_major_locator(months)
+ax7.xaxis.set_major_formatter(dates_fmt)
+ax7.axhline(linewidth=1.5, color='k')
+
+### Add latent heat flux
+ax8 = fig.add_subplot(4,4,8)
+ax8.text(s='Latent heat flux bias,WRF-GLEAMva W/m2', x=0, y=1.02, ha='left', va='bottom', \
+        fontsize=fontsize, transform=ax8.transAxes)
+ax8.plot(x_axis, LH_WRF_NE_W_m2.values - latent_NE_W_m2[0:122].values , 'b-', label='WRF'+label_string1+'-GLEAMva')
+ax8.plot(x_axis[0:120], LH_WRF_Thom_NE_W_m2.values - latent_NE_W_m2[0:120].values , 'g-', label='WRF'+label_string2+'-GLEAMva')
+#ax8.plot(x_axis, latent_ARM_SGP_W_m2[0:122].values, 'k-', label='LH, ARMBE2D')
+ax8.grid()
+ax8.legend(loc='lower left',fontsize=fontsize)
+## format the ticks
+ax8.xaxis.set_major_locator(months)
+ax8.xaxis.set_major_formatter(dates_fmt)
+ax8.axhline(linewidth=1.5, color='k')
+
+#### Add sensible heat flux
+#ax9 = fig.add_subplot(4,4,9)
+#ax9.text(s='Sensible heat flux bias, W/m2', x=0, y=1.02, ha='left', va='bottom', \
+#        fontsize=fontsize, transform=ax9.transAxes)
+#ax9.plot(x_axis, HFX_WRF_SGP.values - sensible_ARM_SGP[0:122].values , 'b-', label='WRF'+label_string1+'-ARMBE2D')
+#ax9.plot(x_axis[0:120], HFX_WRF_Thom_SGP.values - sensible_ARM_SGP[0:120].values , 'g-', label='WRF'+label_string2+'-ARMBE2D')
+##ax9.plot(x_axis, sensible_ARM_SGP[0:122].values, 'k-', label='SH, ARMBE2D')
+#ax9.grid()
+#ax9.legend(loc='upper right',fontsize=fontsize)
+### format the ticks
+#ax9.xaxis.set_major_locator(months)
+#ax9.xaxis.set_major_formatter(dates_fmt)
+#ax9.axhline(linewidth=1.5, color='k')
+
+#### Add WRF precip - Stage IV precip
+#ax10 = fig.add_subplot(4,4,10)
+#ax10.text(s='Precip rate bias, mm/day', x=0, y=1.02, ha='left', va='bottom', \
+#        fontsize=fontsize, transform=ax10.transAxes)
+#ax10.plot(x_axis, RAIN_WRF_SGP.values - pr_st4_ARM_SGP[0:122].values, 'b-', label='WRF'+label_string1+'-StageIV_pr')
+#ax10.plot(x_axis[0:120], RAIN_WRF_Thom_SGP.values - pr_st4_ARM_SGP[0:120].values, 'g-', label='WRF'+label_string2+'-StageIV_pr')
+#ax10.grid()
+#ax10.legend(loc='upper left',fontsize=fontsize)
+### format the ticks
+#ax10.xaxis.set_major_locator(months)
+#ax10.xaxis.set_major_formatter(dates_fmt)
+#ax10.axhline(linewidth=1.5, color='k')
+
+#### Add latent heat flux
+#ax11 = fig.add_subplot(4,4,11)
+#ax11.text(s='Latent heat flux bias, W/m2', x=0, y=1.02, ha='left', va='bottom', \
+#        fontsize=fontsize, transform=ax11.transAxes)
+#ax11.plot(x_axis, LH_WRF_SGP_W_m2.values - E_a_ARM_SGP[0:122].values , 'b-', label='WRF'+label_string1+'-GLEAM_E_va')
+#ax11.plot(x_axis[0:120], LH_WRF_Thom_SGP_W_m2.values - E_a_ARM_SGP[0:120].values , 'g-', label='WRF'+label_string2+'-GLEAM_E_va')
+##ax8.plot(x_axis, E_a_ARM_SGP[0:122].values, 'k-', label='LH, GLEAM E_va')
+#ax11.grid()
+#ax11.legend(loc='lower left',fontsize=fontsize)
+### format the ticks
+#ax11.xaxis.set_major_locator(months)
+#ax11.xaxis.set_major_formatter(dates_fmt)
+#ax11.axhline(linewidth=1.5, color='k')
+#
+#### Add latent heat flux
+#ax12 = fig.add_subplot(4,4,12)
+#ax12.text(s='Latent heat flux bias, W/m2', x=0, y=1.02, ha='left', va='bottom', \
+#        fontsize=fontsize, transform=ax12.transAxes)
+#ax12.plot(x_axis, LH_WRF_SGP_W_m2.values - E_b_ARM_SGP[0:122].values , 'b-', label='WRF'+label_string1+'-GLEAM_E_vb')
+#ax12.plot(x_axis[0:120], LH_WRF_Thom_SGP_W_m2.values - E_b_ARM_SGP[0:120].values , 'g-', label='WRF'+label_string2+'-GLEAM_E_vb')
+##ax8.plot(x_axis, E_b_ARM_SGP[0:122].values, 'k-', label='LH, GLEAM E_vb')
+#ax12.grid()
+#ax12.legend(loc='lower left',fontsize=fontsize)
+### format the ticks
+#ax12.xaxis.set_major_locator(months)
+#ax12.xaxis.set_major_formatter(dates_fmt)
+#ax12.axhline(linewidth=1.5, color='k')
+#
+#### runoff
+#ax13 = fig.add_subplot(4,4,13)
+#ax13.text(s='Accumulated Runoff, mm', x=0, y=1.02, ha='left', va='bottom', \
+#        fontsize=fontsize, transform=ax13.transAxes)
+#ax13.plot(x_axis, SFROFF_WRF_SGP.values , 'b-', label='SFROFF, WRF'+label_string1)
+#ax13.plot(x_axis[0:120], SFROFF_WRF_Thom_SGP.values , 'g-', label='SFROFF, WRF'+label_string2)
+#ax13.plot(x_axis, UDROFF_WRF_SGP.values , 'b--', label='UDROFF, WRF'+label_string1)
+#ax13.plot(x_axis[0:120], UDROFF_WRF_Thom_SGP.values , 'g--', label='UDROFF, WRF'+label_string2)
+#ax13.grid()
+#ax13.legend(loc='upper left',fontsize=fontsize)
+### format the ticks
+#ax13.xaxis.set_major_locator(months)
+#ax13.xaxis.set_major_formatter(dates_fmt)
+#ax13.axhline(linewidth=1.5, color='k')
+#
+###
+#fig.savefig("../Figure/Figure15.WRF_vs_ARM_SGP.png",dpi=600, bbox_inches='tight')
+fig.savefig("../Figure/Figure15.WRF_Morri_Thom_vs_obs_Nebraska.StageIV_pr.GLEAM.added.png",dpi=600)
+plt.show()
+
+
+
+
+
+
+
+
