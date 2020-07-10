@@ -14,6 +14,12 @@ label_string2 = "_Thom"
 
 #ds_WRF = xr.open_dataset('/home/qin5/Data/WRF.postprocessing.extract.hourly.nc')
 ds_WRF = xr.open_dataset('/home/qin5/Data/WRF.postprocessing.extract.hourly.Morri.nc')
+
+## 0.04 grid
+ds_WRF_RAIN_tot = xr.open_dataset('/home/qin5/Data/WRF_postprocessing/WRF_Morri/WRF.postprocessing.extract.hourly.0.04.RAIN_tot.ncrcat.nc')
+ds_WRF_LH = xr.open_dataset('/home/qin5/Data/WRF_postprocessing/WRF_Morri/WRF.postprocessing.extract.hourly.0.04.LH.ncrcat.nc')
+ds_WRF_MCS = xr.open_dataset('/home/qin5/Data/WRF_postprocessing/WRF_Morri/WRF.mask.postprocessing.extract.hourly.0.04.nc')
+
 ds_SM_WRF = xr.open_dataset('/home/qin5/Data/WRF.postprocessing.extract.hourly.SMOIS.nc')
 
 #ds_WRF_Thom = xr.open_dataset('/home/qin5/Data/WRF.postprocessing.extract.hourly.Thom.056.nc')
@@ -35,19 +41,56 @@ lon_1 = -99.0
 lon_2 = -96.0
 
 ### WRF calculate daily mean at ARM SGP site 
+### MCS masks
+WRF_MCS_mask = ds_WRF_MCS['pcptracknumber_regrid']
+
 RAIN_tot_regrid = ds_WRF['RAIN_tot_regrid']
+
 RAIN_WRF_daily = RAIN_tot_regrid.resample(time='1D').mean(dim='time')
 RAIN_WRF_SGP = RAIN_WRF_daily.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
 RAIN_WRF_SGP = RAIN_WRF_SGP * 24.0 # from mm/hr to mm/day
 RAIN_WRF_SGP.attrs['units'] = "mm/day"
-#print(RAIN_WRF_SGP)
 
-#### accumulative rain
 RAIN_WRF_ACC = np.asarray([RAIN_WRF_SGP[0:i].values.sum() for i in np.arange(0,122,1)])
 RAIN_WRF_ACC = xr.DataArray(RAIN_WRF_ACC, dims=('time'), coords = {'time':RAIN_WRF_SGP.coords['time'] })
 RAIN_WRF_ACC.attrs['units'] = "mm"
 RAIN_WRF_ACC.attrs['long_name'] = "accumulated total precip"
-#print(RAIN_WRF_ACC)
+
+###
+### MCS vs non-MCS
+RAIN_tot_regrid_yes_MCS = ds_WRF_RAIN_tot['RAIN_tot_regrid'].where(WRF_MCS_mask > 0)
+RAIN_tot_regrid_no_MCS = ds_WRF_RAIN_tot['RAIN_tot_regrid'].where(np.isnan(WRF_MCS_mask))
+
+RAIN_WRF_SGP_temp_yes_MCS = RAIN_tot_regrid_yes_MCS.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
+RAIN_WRF_SGP_temp_yes_MCS = RAIN_WRF_SGP_temp_yes_MCS * 24.0 # from mm/hr to mm/day
+RAIN_WRF_SGP_temp_yes_MCS.attrs['units'] = "mm/day"
+
+### replace nan with zero to avoid problems when calculating the accumulated values.
+RAIN_WRF_SGP_temp_yes_MCS[np.isnan(RAIN_WRF_SGP_temp_yes_MCS)] = 0.0
+
+RAIN_WRF_SGP_yes_MCS = RAIN_WRF_SGP_temp_yes_MCS.resample(time='1D').mean(dim='time')
+print(RAIN_WRF_SGP_yes_MCS)
+
+RAIN_WRF_SGP_temp_no_MCS = RAIN_tot_regrid_no_MCS.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
+RAIN_WRF_SGP_temp_no_MCS = RAIN_WRF_SGP_temp_no_MCS * 24.0 # from mm/hr to mm/day
+RAIN_WRF_SGP_temp_no_MCS.attrs['units'] = "mm/day"
+
+### replace nan with zero to avoid problems when calculating the accumulated values.
+RAIN_WRF_SGP_temp_no_MCS[np.isnan(RAIN_WRF_SGP_temp_no_MCS)] = 0.0
+
+RAIN_WRF_SGP_no_MCS = RAIN_WRF_SGP_temp_no_MCS.resample(time='1D').mean(dim='time')
+print(RAIN_WRF_SGP_no_MCS)
+
+#### accumulative rain
+RAIN_WRF_ACC_yes_MCS = np.asarray([RAIN_WRF_SGP_yes_MCS[0:i].values.sum() for i in np.arange(0,122,1)])
+RAIN_WRF_ACC_yes_MCS = xr.DataArray(RAIN_WRF_ACC_yes_MCS, dims=('time'), coords = {'time':RAIN_WRF_SGP_yes_MCS.coords['time'] })
+RAIN_WRF_ACC_yes_MCS.attrs['units'] = "mm"
+RAIN_WRF_ACC_yes_MCS.attrs['long_name'] = "accumulated total precip"
+
+RAIN_WRF_ACC_no_MCS = np.asarray([RAIN_WRF_SGP_no_MCS[0:i].values.sum() for i in np.arange(0,122,1)])
+RAIN_WRF_ACC_no_MCS = xr.DataArray(RAIN_WRF_ACC_no_MCS, dims=('time'), coords = {'time':RAIN_WRF_SGP_no_MCS.coords['time'] })
+RAIN_WRF_ACC_no_MCS.attrs['units'] = "mm"
+RAIN_WRF_ACC_no_MCS.attrs['long_name'] = "accumulated total precip"
 
 ### -------- calculate evaporation from latent heat
 Lv_water = 2264705.0 # J/kg
@@ -59,15 +102,56 @@ LH_WRF_SGP_W_m2 = LH_WRF_SGP
 LH_WRF_SGP = LH_WRF_SGP * 3600.0*24.0/Lv_water # from W/m2 to mm/day
 LH_WRF_SGP.attrs['units'] = "mm/day"
 LH_WRF_SGP.attrs['long_name'] = "ET converted from latent heat flux, mm/day"
+
+###
+### MCS vs non-MCS seperation
+LH_regrid_yes_MCS = ds_WRF_LH['LH_regrid'].where(WRF_MCS_mask > 0)
+LH_regrid_no_MCS = ds_WRF_LH['LH_regrid'].where(np.isnan(WRF_MCS_mask))
+
+LH_WRF_SGP_temp_yes_MCS = LH_regrid_yes_MCS.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
+LH_WRF_SGP_W_m2_temp_yes_MCS = LH_WRF_SGP_temp_yes_MCS
+LH_WRF_SGP_temp_yes_MCS = LH_WRF_SGP_temp_yes_MCS * 3600.0*24.0/Lv_water # from W/m2 to mm/day
+LH_WRF_SGP_temp_yes_MCS.attrs['units'] = "mm/day"
+LH_WRF_SGP_temp_yes_MCS.attrs['long_name'] = "ET converted from latent heat flux, mm/day"
 #print(LH_WRF_SGP)
 
+### replace nan with 0.0 to avoid problems when calculating the accumulated values
+LH_WRF_SGP_temp_yes_MCS[np.isnan(LH_WRF_SGP_temp_yes_MCS)] = 0.0
+LH_WRF_SGP_W_m2_temp_yes_MCS[np.isnan(LH_WRF_SGP_W_m2_temp_yes_MCS)] = 0.0
+
+LH_WRF_SGP_yes_MCS = LH_WRF_SGP_temp_yes_MCS.resample(time='1D').mean(dim='time')
+LH_WRF_SGP_W_m2_yes_MCS = LH_WRF_SGP_W_m2_temp_yes_MCS.resample(time='1D').mean(dim='time')
+print(LH_WRF_SGP_yes_MCS)
+
+###
+LH_WRF_SGP_temp_no_MCS = LH_regrid_no_MCS.sel(lat=slice(lat_1, lat_2), lon=slice(lon_1, lon_2)).mean(dim='lat').mean(dim='lon')
+LH_WRF_SGP_W_m2_temp_no_MCS = LH_WRF_SGP_temp_no_MCS
+LH_WRF_SGP_temp_no_MCS = LH_WRF_SGP_temp_no_MCS * 3600.0*24.0/Lv_water # from W/m2 to mm/day
+LH_WRF_SGP_temp_no_MCS.attrs['units'] = "mm/day"
+LH_WRF_SGP_temp_no_MCS.attrs['long_name'] = "ET converted from latent heat flux, mm/day"
+
+### replace nan with 0.0 to avoid problems when calculating the accumulated values
+LH_WRF_SGP_temp_no_MCS[np.isnan(LH_WRF_SGP_temp_no_MCS)] = 0.0
+LH_WRF_SGP_W_m2_temp_no_MCS[np.isnan(LH_WRF_SGP_W_m2_temp_no_MCS)] = 0.0
+
+LH_WRF_SGP_no_MCS = LH_WRF_SGP_temp_no_MCS.resample(time='1D').mean(dim='time')
+LH_WRF_SGP_W_m2_no_MCS = LH_WRF_SGP_W_m2_temp_no_MCS.resample(time='1D').mean(dim='time')
+print(LH_WRF_SGP_no_MCS)
+
 #### accumulative evaporation
-evap_WRF_ACC = np.asarray([LH_WRF_SGP[0:i].values.sum() for i in np.arange(0,122,1)])
-evap_WRF_ACC = xr.DataArray(evap_WRF_ACC, dims=('time'), coords = {'time':LH_WRF_SGP.coords['time'] })
-evap_WRF_ACC.attrs['units'] = "mm"
-evap_WRF_ACC.attrs['long_name'] = "accumulated ET, converted from latent heat flux"
+evap_WRF_ACC_yes_MCS = np.asarray([LH_WRF_SGP_yes_MCS[0:i].values.sum() for i in np.arange(0,122,1)])
+evap_WRF_ACC_yes_MCS = xr.DataArray(evap_WRF_ACC_yes_MCS, dims=('time'), coords = {'time':LH_WRF_SGP_yes_MCS.coords['time'] })
+evap_WRF_ACC_yes_MCS.attrs['units'] = "mm"
+evap_WRF_ACC_yes_MCS.attrs['long_name'] = "accumulated ET, converted from latent heat flux"
 #print(evap_WRF_ACC)
 
+evap_WRF_ACC_no_MCS = np.asarray([LH_WRF_SGP_no_MCS[0:i].values.sum() for i in np.arange(0,122,1)])
+evap_WRF_ACC_no_MCS = xr.DataArray(evap_WRF_ACC_no_MCS, dims=('time'), coords = {'time':LH_WRF_SGP_no_MCS.coords['time'] })
+evap_WRF_ACC_no_MCS.attrs['units'] = "mm"
+evap_WRF_ACC_no_MCS.attrs['long_name'] = "accumulated ET, converted from latent heat flux"
+
+
+###
 ### soil moisture at 5cm depth 
 SMOIS_regrid = ds_SM_WRF['SMOIS_regrid'][:,0,:,:]   # depth 0 is 5-cm
 SMOIS_WRF_daily = SMOIS_regrid.resample(time='1D').mean(dim='time')
@@ -332,9 +416,10 @@ pos_adjust1 = 0.02
 ax1 = fig.add_subplot(4,4,1)
 ax1.text(s='Accumulated precip, mm', x=0, y=1.02, ha='left', va='bottom', \
         fontsize=fontsize, transform=ax1.transAxes)
-ax1.plot(x_axis, RAIN_WRF_ACC.values, 'b-', label='precip, WRF'+label_string1)
-#ax1.plot(x_axis[0:120], RAIN_WRF_Thom_ACC.values, 'g-', label='precip, WRF'+label_string2)
-ax1.plot(x_axis[0:120], RAIN_WRF_Thom_ACC.values, 'r-', label='precip, WRF'+label_string2)
+ax1.plot(x_axis, RAIN_WRF_ACC_yes_MCS.values, 'b-', label='precip, WRF'+label_string1+"_yes_MCS")
+ax1.plot(x_axis, RAIN_WRF_ACC_no_MCS.values, 'y-', label='precip, WRF'+label_string1+"_no_MCS")
+ax1.plot(x_axis[0:120], RAIN_WRF_Thom_ACC.values, 'g-', label='precip, WRF'+label_string2)
+#ax1.plot(x_axis[0:120], RAIN_WRF_Thom_ACC.values, 'r-', label='precip, WRF'+label_string2)
 ## Note that WRF simulation does not have 08-31 data, only 122 values;
 ## Therefore, also omit 08-31 data in ARMBE when plotting.
 ax1.plot(x_axis, precip_ARM_ACC[0:122].values, 'k-', label='precip, ARMBE2D')
@@ -348,7 +433,8 @@ ax1.xaxis.set_major_formatter(dates_fmt)
 ax2 = fig.add_subplot(4,4,2)
 ax2.text(s='Accumulated ET (converted from LatentHeatFlux), mm', x=0, y=1.02, ha='left', va='bottom', \
         fontsize=fontsize, transform=ax2.transAxes)
-ax2.plot(x_axis, evap_WRF_ACC.values, 'b-', label='ET, WRF'+label_string1)
+ax2.plot(x_axis, evap_WRF_ACC_yes_MCS.values, 'b-', label='ET, WRF'+label_string1+"_yes_MCS")
+ax2.plot(x_axis, evap_WRF_ACC_no_MCS.values, 'y-', label='ET, WRF'+label_string1+"_no_MCS")
 ax2.plot(x_axis[0:120], evap_WRF_Thom_ACC.values, 'g-', label='ET, WRF'+label_string2)
 #-------
 ax2.plot(x_axis, evap_ARM_ACC[0:122].values, 'k-', label='ET, ARMBE2D')
@@ -362,9 +448,10 @@ ax2.xaxis.set_major_formatter(dates_fmt)
 ax3 = fig.add_subplot(4,4,3)
 ax3.text(s='P-E (Accumulated), mm', x=0, y=1.02, ha='left', va='bottom', \
         fontsize=fontsize, transform=ax3.transAxes)
-ax3.plot(x_axis, (RAIN_WRF_ACC.values - evap_WRF_ACC.values), 'b-', label='P-E, WRF'+label_string1)
-#ax3.plot(x_axis[0:120], (RAIN_WRF_Thom_ACC.values - evap_WRF_Thom_ACC.values), 'g-', label='P-E, WRF'+label_string2)
-ax3.plot(x_axis[0:120], (RAIN_WRF_Thom_ACC.values - evap_WRF_Thom_ACC.values), 'r-', label='P-E, WRF'+label_string2)
+ax3.plot(x_axis, (RAIN_WRF_ACC_yes_MCS.values - evap_WRF_ACC_yes_MCS.values), 'b-', label='P-E, WRF'+label_string1+"_yes_MCS")
+ax3.plot(x_axis, (RAIN_WRF_ACC_no_MCS.values - evap_WRF_ACC_no_MCS.values), 'y-', label='P-E, WRF'+label_string1+"_no_MCS")
+ax3.plot(x_axis[0:120], (RAIN_WRF_Thom_ACC.values - evap_WRF_Thom_ACC.values), 'g-', label='P-E, WRF'+label_string2)
+#ax3.plot(x_axis[0:120], (RAIN_WRF_Thom_ACC.values - evap_WRF_Thom_ACC.values), 'r-', label='P-E, WRF'+label_string2)
 #--------
 ax3.plot(x_axis, (precip_ARM_ACC[0:122].values - evap_ARM_ACC[0:122].values), 'k-', label='P-E, ARMBE2D')
 ax3.grid()
@@ -524,7 +611,7 @@ ax13.axhline(linewidth=1.5, color='k')
 
 ###
 #fig.savefig("../Figure/Figure15.WRF_vs_ARM_SGP.png",dpi=600, bbox_inches='tight')
-fig.savefig("../Figure/Figure15.WRF_Morri_Thom_vs_ARM_SGP.StageIV_pr.GLEAM.added.png",dpi=600)
+fig.savefig("../Figure_MCS_mask/Figure15.WRF_Morri_Thom_vs_ARM_SGP.StageIV_pr.GLEAM.added.MCS_mask.png",dpi=600)
 plt.show()
 
 
