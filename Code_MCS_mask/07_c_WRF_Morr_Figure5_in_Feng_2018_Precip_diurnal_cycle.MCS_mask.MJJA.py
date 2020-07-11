@@ -73,14 +73,15 @@ print(ds_WRF_MCS['time'][0:24])
 print(ds_OBS['time'][0:24])
 
 ### skip the first 17 values from 05-01 07:00:00 - 05-01 23:00:00
-var_WRF_yes_MCS2 = var_WRF_yes_MCS[17:]
-var_WRF_no_MCS2 = var_WRF_no_MCS[17:]
-print(var_WRF_yes_MCS2)
-print(var_WRF_no_MCS2)
+## Not necessary, groupby('time.hour').mean() will separate based on hour the day.
+#var_WRF_yes_MCS2 = var_WRF_yes_MCS[17:]
+#var_WRF_no_MCS2 = var_WRF_no_MCS[17:]
+#print(var_WRF_yes_MCS2)
+#print(var_WRF_no_MCS2)
 
 ### the time has regular values, so you can use the following command
-WRF_yes_MCS = var_WRF_yes_MCS2.groupby('time.hour').mean()
-WRF_no_MCS = var_WRF_no_MCS2.groupby('time.hour').mean()
+WRF_yes_MCS = var_WRF_yes_MCS.groupby('time.hour').mean()
+WRF_no_MCS = var_WRF_no_MCS.groupby('time.hour').mean()
 
 ## change units
 WRF_yes_MCS = WRF_yes_MCS * 24.0  # from mm/hour to mm/day
