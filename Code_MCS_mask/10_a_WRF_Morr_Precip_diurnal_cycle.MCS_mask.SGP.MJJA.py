@@ -81,8 +81,8 @@ print(ds_OBS['time'][0:24])
 ##print(var_WRF_no_MCS2)
 
 ### the time has regular values, so you can use the following command
-WRF_yes_MCS = var_WRF_yes_MCS1.groupby('time.hour').mean()
-WRF_no_MCS = var_WRF_no_MCS1.groupby('time.hour').mean()
+WRF_yes_MCS = var_WRF_yes_MCS.groupby('time.hour').mean()
+WRF_no_MCS = var_WRF_no_MCS.groupby('time.hour').mean()
 
 ## change units
 WRF_yes_MCS = WRF_yes_MCS * 24.0  # from mm/hour to mm/day
@@ -259,7 +259,7 @@ ax1.legend(loc='upper right')
 #ax2.grid()
 #ax2.legend(loc='lower right')
 
-fig.savefig("../Figure_MCS_mask/09_a_Precip.OBS_vs_WRF_Morri"+label_string+"leeway_0.1"+".MCS_masks.png",dpi=600,bbox_inches="tight")
+fig.savefig("../Figure_MCS_mask/09_a_Precip.OBS_vs_WRF_Morri"+label_string+"leeway_0.1"+".MCS_masks.png",dpi=200,bbox_inches="tight")
 plt.show()
 
 
